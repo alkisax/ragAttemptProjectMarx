@@ -1,0 +1,61 @@
+# -------------------------------------------------
+# 🧠 Node / TypeScript RAG backend
+# -------------------------------------------------
+
+# Node modules
+node_modules/
+
+# Build output (tsc)
+build/
+dist/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Progress / temporary files
+vectorize.progress.json
+*.log
+logs/
+tmp/
+temp/
+
+# OS / system files
+.DS_Store
+Thumbs.db
+
+# TypeScript cache
+*.tsbuildinfo
+
+# npm / yarn / pnpm lockfiles (pick one)
+package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# IDE / editor configs
+.vscode/
+.idea/
+*.swp
+
+# coverage reports (for Jest)
+coverage/
+
+# local test data / uploads
+uploads/
+data/
+__tests__/output/
+__mocks__/
+
+# Other generated RAG data
+*.jsonl
+*.sqlite
+*.bak
+
+# React / Vite frontend build
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.vite/
