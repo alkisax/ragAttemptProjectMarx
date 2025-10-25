@@ -5,7 +5,7 @@
   Routes για τα endpoints vectorization και semantic search.
 
   prev → backend\src\vectorize\gptEmbeddingsParagraph.controller.ts
-  next → 
+  next → backend\src\rag\gptRag.service.ts
 */
 
 import { Router } from 'express'

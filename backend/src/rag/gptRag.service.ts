@@ -28,6 +28,8 @@ export const getGPTResponse = async (
   const url = 'https://api.openai.com/v1/chat/completions'
 
   try {
+    console.log('🧠 using chat completions endpoint', prompt.slice(0, 120))
+
     const response = await axios.post(
       url,
       {
