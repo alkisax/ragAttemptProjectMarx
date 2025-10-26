@@ -75,12 +75,25 @@ const askWithContext = async (req: Request, res: Response) => {
     const gptAnswer = await getGPTResponse(prompt, apiKey)
 
     // 5️⃣ επιστρέφουμε JSON απάντηση
+    // 5️⃣ επιστρέφουμε JSON απάντηση χωρίς τα vectors
     return res.json({
       status: true,
       question: query,
       answer: gptAnswer,
-      context: topParagraphs
+      context: topParagraphs.map(p => ({
+        _id: p._id,
+        book: p.book,
+        chapter: p.chapter,
+        chapterTitle: p.chapterTitle,
+        sectionTitle: p.sectionTitle,
+        subsectionTitle: p.subsectionTitle,
+        subsubsectionTitle: p.subsubsectionTitle,
+        paragraphNumber: p.paragraphNumber,
+        text: p.text,
+        score: p.score
+      }))
     })
+
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
     return res.status(500).json({ status: false, message: msg })

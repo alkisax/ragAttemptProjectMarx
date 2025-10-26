@@ -57,7 +57,7 @@ const searchHandlerExtended = async (req: Request, res: Response) => {
       const context = await Paragraph.find({
         book,
         chapter,
-        paragraphNumber: { $gte: pNum - 3, $lte: pNum + 3 },
+        paragraphNumber: { $gte: Number(pNum) - 3, $lte: Number(pNum) + 3 },
         type: 'text'
       })
         .sort({ paragraphNumber: 1 })
