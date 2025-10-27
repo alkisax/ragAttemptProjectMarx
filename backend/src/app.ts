@@ -14,6 +14,8 @@ import path from 'path';
   // import scraperRoutes from './scraper/scraper.routes';
   import vectoriseRoutes from './vectorize/gptEmbeddingsParagraph.routes'
   import gptRagParagraphRoutes from './rag/gptRagParagraph.routes'
+  import ragMemoryRoutes from './ragMemory/RagMemory.routes'
+
 
 
 const app = express();
@@ -127,7 +129,7 @@ app.get('/health', (_req, res) => {
 // app.use("/api/scraper", scraperRoutes);
 app.use('/api/vectorise', vectoriseRoutes)
 app.use('/api/rag', gptRagParagraphRoutes)
-
+app.use('/api/rag-memory', ragMemoryRoutes)
 
 app.use(express.static('dist')); 
 

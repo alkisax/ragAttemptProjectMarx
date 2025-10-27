@@ -1,3 +1,4 @@
+// backend\src\rag\gptRagParagraph.routes.ts
 /*
   11.
   💥 RAG Routes — σύνδεση του controller με το Express router
@@ -18,5 +19,9 @@ const router = express.Router()
 // -------------------------------------------------------------
 router.post('/ask', gptRagParagraphController.askWithContext)
 router.post('/ask-extended', gptRagParagraphController.askWithContextExtended)
+// 💣💣 14 💥💥
+router.post('/ask-hybrid', gptRagParagraphController.askWithContextHybrid)
+router.post('/ask-extended-hybrid', gptRagParagraphController.askWithContextExtendedHybrid)
+
 
 export default router

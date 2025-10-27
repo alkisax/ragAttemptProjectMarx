@@ -24,4 +24,9 @@ const paragraphSchema = new mongoose.Schema<ParagraphType>({
   vector: { type: [Number], default: [] }
 }, { timestamps: true })
 
+// 💣💣 14 💥💥αυτό προστέθηκε μετά το βήμα 13 ο σκοπός είναι να φτιαχτεί index με βάση το κείμενο ωστε να κάνουμε hybrid search με semantic και με BM25 (text-based)
+// next → backend\src\vectorize\gptEmbeddingsParagraph.service.ts
+// τρέχει μονο μια φορα και μετα ελέγχει αν υπάρχει.
+paragraphSchema.index({ text: 'text' })
+
 export default mongoose.model<ParagraphType>('Paragraph', paragraphSchema)

@@ -33,8 +33,8 @@ export const getGPTResponse = async (
     const response = await axios.post(
       url,
       {
-        // model: 'gpt-3.5-turbo', // ✅ εδώ μπορείς αργότερα να το αλλάξεις σε 'gpt-4-turbo'
-        model: 'gpt-4o-mini',
+        model: 'gpt-3.5-turbo', // ✅ εδώ μπορείς αργότερα να το αλλάξεις σε 'gpt-4-turbo'
+        // model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: prompt }]
       },
       {

@@ -177,11 +177,131 @@ export const semanticSearchParagraphsVector = async (query: string, topN = 5): P
   return results as ParagraphType[]
 }
 
+// 💣💣 14 💥💥αυτό προστέθηκε μετά το βήμα 13 ο σκοπός είναι να φτιαχτεί index με βάση το κείμενο ωστε να κάνουμε hybrid search με semantic και με BM25 (text-based)
+// next → backend\src\vectorize\gptEmbeddingsParagraph.controller.ts
+// -------------------------------------------------------------
+// 💥 Μικτή Αναζήτηση (Hybrid BM25 + Vector Similarity)
+// -------------------------------------------------------------
+/*
+  in → query: text, topN: number
+  out → N paragraphs
+*/
+const hybridSearchParagraphs = async (query: string, topN = 5) => {
+
+  // 1. Semantic search (vector similarity) Κάνει το query vector και βρήσκει τις top N με semantic
+  const vectorResults = await gptEmbeddingsService.semanticSearchParagraphsVector(query, topN * 2)
+
+  // 2. BM25 full-text search
+  // Η Mongo έχει ένα built-in “text search” (BM25) για να βρίσκει λέξεις μέσα σε κείμενα.
+  // “Βρες μου όλα τα Paragraphs που περιέχουν τις λέξεις του query
+  const bm25Results = await Paragraph.find({ $text: { $search: query } })
+    // “Όταν μου φέρεις τα documents, θέλω να επιστρέψεις ΜΟΝΟ δύο πεδία: text → το ίδιο το κείμενο της παραγράφου, score → το text relevance score (υπολογισμένο από τον αλγόριθμο BM25)
+    // $meta: 'textScore → “βάλε ένα επιπλέον πεδίο score με τη σχετικότητα αυτού του document ως προς το query.”
+    .select({ text: 1, score: { $meta: 'textScore' } })
+    // Ταξινόμησε τα αποτελέσματα από το πιο σχετικό προς το λιγότερο
+    .sort({ score: { $meta: 'textScore' } })
+    .limit(topN * 2)
+    // Επιστρέψε απλά JavaScript objects αντί για Mongoose documents.
+    .lean()
+
+  // 3. Ομαδοποίηση ανά document
+  // Δημιουργούμε ένα Dictionary που κρατά:
+  // key: το id του paragraph (string)
+  // value: ένα object { cosine, bm25, text }
+  const scoreMap = new Map<string, { cosine: number; bm25: number; text: string }>()
+
+  // παίρνουμε τα αποτελέσματα απο το semantic search και για κάθε ένα απο αυτά του λέμε οτι η τιμή του score του είναι αυτή που βγήκε απο το cosine score και 0 όσων αφορα το bm25 (θα προστεθεί αργότερα) + αποθηκευουμε το κείμενο της παραγράφου
+  // → “Γέμισε το Map με όλα τα αποτελέσματα του semantic/vector search.Για κάθε _id κράτα το cosine score.”
+  // .set() στο Map(Dictionary/Hashmap) ≈ .push() σε ένα Array
+  for (const v of vectorResults) {
+    scoreMap.set(String(v._id), { 
+      cosine: v.score ?? 0,
+      bm25: 0,
+      text: v.text ?? ''
+    })
+  }
+
+  // Παίρνουμε τα αποτελέσματα απο bm25
+  for (const b of bm25Results) {
+    // “Ψάξε μέσα στο Map αν υπάρχει ήδη εγγραφή για αυτό το _id.”
+    const existing = scoreMap.get(String(b._id))
+    // αν το έχουμε συναντήσει και στο semantic του προσθέτουμε και το bm25 score που πριν το είχαμε 0
+    if (existing) existing.bm25 = b.score ?? 0
+    // αλλιως του ενημερώνουμε το bm25 score, κρατάμε το κείμενο και βάζουμε το score του semantic, 0
+    else scoreMap.set(String(b._id), {
+      cosine: 0,
+      bm25: b.score ?? 0,
+      text: b.text ?? ''
+    })
+  }
+
+  // 4. Κανονικοποίηση (normalize) scores [0–1]
+  // πρέπει να φέρεις διαφορετικές τιμές στην ίδια κλίμακα (0–1), ώστε να μπορείς να τις συνδυάσεις
+  // δύο διαφορετικά είδη score:
+  // cosine → semantic ομοιότητα (π.χ. 0.81, 0.56, 0.12 κ.λπ.)
+  // bm25 → text-based relevance (π.χ. 5.2, 3.1, 0.7 κ.λπ.)
+
+  /*  --Αυτό είναι το λεγόμενο min-max normalization:-- 
+  οπότε αναζητώ το μεγιστο της καθε μιας για να διερέσω το score με το μέγιστο. Όμως δεν μπορω να ξέρω πιο είναι το μεγιστο αλλα μόνο το μεγαλύτερο βαθμό που βρήκα. 
+  “Το άριστα για cosine είναι 1.0, γιατί αυτό σημαίνει απόλυτη ταύτιση.”
+  “Το άριστα για BM25 είναι ??, αλλά δεν είναι σταθερό, αλλάζει με το query.” Για BM25, δεν υπάρχει σταθερό “άριστα”, γιατί εξαρτάται από το μήκος του εγγράφου, τη συχνότητα λέξεων, το query, κλπ. Μπορεί να είναι 3, 10 ή 120.
+  Το **μέγιστο υπαρκτό** είναι ένας πρακτικός, δυναμικός τρόπος να φέρεις όλες τις τιμές στο ίδιο εύρος, ανεξαρτήτως μονάδων ή θεωρητικού άριστα. Ουσιαστικά λες:“Ποια παράγραφος είχε τη μεγαλύτερη ομοιότητα στο τρέχον query; Αυτή θα θεωρηθεί 100%. Όλες οι άλλες θα μετρηθούν σε σχέση με αυτή.
+
+  Αν πχ αν τα semantic scores είναι [0.9, 0.45, 0.3] Άρα το “καλύτερο” που υπήρξε → γίνεται το 1.0, και όλα τα υπόλοιπα εκφράζονται σχετικά ως ποσοστό του καλύτερου.
+
+  Με αυτόν τον τρόπο φέρνουμε τις δύο μετρικές (semantic και BM25) 
+  στην ίδια κλίμακα [0–1] ώστε να μπορούν να συνδυαστούν δίκαια
+  */
+  // φτιάχνει ένα arr μονο με τα σκορ απο vector
+  const cosVals = Array.from(scoreMap.values()).map(v => v.cosine)
+  // φτιάχνει ένα arr μονο με τα σκορ απο bm25
+  const bmVals = Array.from(scoreMap.values()).map(v => v.bm25)
+  // Βρίσκει το μεγαλύτερο (μέγιστο) σε κάθε λίστα
+  // Το , 1 στο τέλος για να μην βγει Infinity
+  const cosMax = Math.max(...cosVals, 1)
+  const bmMax = Math.max(...bmVals, 1)
+
+  // 5. Συνδυασμός
+  // id → είναι το _id της παραγράφου (string)
+  // obj → είναι το αντικείμενο { cosine, bm25, text }
+  const combined = await Promise.all(
+    Array.from(scoreMap.entries()).map(async ([id, obj]) => {
+      // Φέρνουμε επιπλέον μεταδεδομένα για κάθε παράγραφο (book, chapter κλπ)
+      const paragraph = await Paragraph.findById(id)
+        .select('book chapter paragraphNumber chapterTitle sectionTitle subsectionTitle subsubsectionTitle text')
+        .lean()
+
+      return {
+        _id: id,
+        book: paragraph?.book ?? null,
+        chapter: paragraph?.chapter ?? null,
+        paragraphNumber: paragraph?.paragraphNumber ?? null,
+        chapterTitle: paragraph?.chapterTitle ?? null,
+        sectionTitle: paragraph?.sectionTitle ?? null,
+        subsectionTitle: paragraph?.subsectionTitle ?? null,
+        subsubsectionTitle: paragraph?.subsubsectionTitle ?? null,
+        text: obj.text,
+        cosine: obj.cosine,
+        bm25: obj.bm25,
+        // finalScore: 0.7 * (obj.cosine / cosMax) + 0.3 * (obj.bm25 / bmMax) // ⚠️⚠️⚠️⚠️ 70% vector / 30% bm25
+        finalScore: 0.3 * (obj.cosine / cosMax) + 0.7 * (obj.bm25 / bmMax) // ⚠️⚠️⚠️⚠️ 70% vector / 30% bm25
+      }
+    })
+  )
+
+  // 6. Ταξινόμηση κατά finalScore
+  combined.sort((a, b) => b.finalScore - a.finalScore)
+
+  // 7. Επιστρέφουμε τα topN
+  return combined.slice(0, topN)
+}
+
 export const gptEmbeddingsService = {
   getEmbedding,
   cosineSimilarity,
   semanticSearchParagraphs,
-  semanticSearchParagraphsVector
+  semanticSearchParagraphsVector,
+  hybridSearchParagraphs
 }
 
 /* --- οδηγίες για δημιουργεία vector index στο mongo compass ---
@@ -216,4 +336,10 @@ export const gptEmbeddingsService = {
   vector_index
   Click Create Index.
   Compass will show “Building index…” — it usually takes 1–2 minutes.
+*/
+
+/* --- οδηγίες για δημιουργεία text index ---
+  απλώς προσθέτω την γραμμή 
+  paragraphSchema.index({ text: 'text' })
+  στο μοντέλο
 */

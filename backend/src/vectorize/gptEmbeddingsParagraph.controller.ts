@@ -199,6 +199,105 @@ const searchHandlerSomeExtended = async (req: Request, res: Response) => {
   }
 }
 
+// 💣💣 14 💥💥αυτό προστέθηκε μετά το βήμα 13 ο σκοπός είναι να φτιαχτεί index με βάση το κείμενο ωστε να κάνουμε hybrid search με semantic και με BM25 (text-based)
+// next → backend\src\vectorize\gptEmbeddingsParagraph.routes.ts
+// θα φτιαξουμε δύο ίδιες. Μια για απλο search hybrid και μια μια για extended some (+-2) hybrid search 
+const searchHandlerHybrid = async (req: Request, res: Response) => {
+  try {
+    const { query } = req.body
+
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ status: false, message: 'Missing query in body' })
+    }
+
+    // το search τώρα γίνετε με hybrid (BM25 + Semantic)
+    const results = await gptEmbeddingsService.hybridSearchParagraphs(query, 5)
+
+    return res.status(200).json({
+      status: true,
+      count: results.length,
+      data: results
+    })
+  } catch (error) {
+    return handleControllerError(res, error)
+  }
+}
+
+
+// 💣💣 14 💥💥
+// -------------------------------------------------------------
+// searchHandlerSomeExtendedHybrid — μικτή αναζήτηση με context ±2
+// -------------------------------------------------------------
+const searchHandlerSomeExtendedHybrid = async (req: Request, res: Response) => {
+  try {
+    const { query } = req.body
+
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ status: false, message: 'Missing query in body' })
+    }
+
+    // Μικτή αναζήτηση (BM25 + Semantic)
+    const topMatches = await gptEmbeddingsService.hybridSearchParagraphs(query, 5)
+    const expandedResults: any[] = []
+
+    // Για κάθε match → βρες ±2 παραγράφους
+    for (const match of topMatches) {
+      const { book, chapter, paragraphNumber } = match
+      const pNum = Number(paragraphNumber)
+
+      const context = await Paragraph.aggregate([
+        {
+          $addFields: { paragraphNum: { $toDouble: '$paragraphNumber' } }
+        },
+        {
+          $match: {
+            book,
+            chapter,
+            type: 'text',
+            paragraphNum: { $gte: pNum - 2, $lte: pNum + 2 }
+          }
+        },
+        { $sort: { paragraphNum: 1 } }
+      ])
+
+      // Συγχώνευση context (merged text)
+      const mergedText =
+        context.length > 0
+          ? context.map(p => p.text).filter(Boolean).join(' ')
+          : match.text ?? ''
+
+      // Αποθήκευση enriched αποτελέσματος
+      expandedResults.push({
+        book: match.book,
+        chapter: match.chapter,
+        chapterTitle: match.chapterTitle,
+        sectionTitle: match.sectionTitle,
+        subsectionTitle: match.subsectionTitle,
+        subsubsectionTitle: match.subsubsectionTitle,
+        paragraphNumber: match.paragraphNumber,
+        centerParagraph: {
+          _id: match._id,
+          paragraphNumber: match.paragraphNumber,
+          text: match.text
+            ? match.text.split(/\s+/).slice(0, 5).join(' ') + '...'
+            : '',
+          score: match.finalScore // 👈 Χρησιμοποιούμε το hybrid score
+        },
+        mergedText
+      })
+    }
+
+    // Επιστροφή enriched results
+    return res.status(200).json({
+      status: true,
+      count: expandedResults.length,
+      data: expandedResults
+    })
+  } catch (error) {
+    return handleControllerError(res, error)
+  }
+}
+
 // -------------------------------------------------------------
 //  POST /api/vectorize/locate
 //  💥 Επιστρέφει τα κεφάλαια στα οποία γίνεται συζήτηση για ένα θέμα
@@ -291,6 +390,8 @@ export const gptEmbeddingsParagraphController = {
   searchHandler,
   searchHandlerExtended,
   searchHandlerSomeExtended,
+  searchHandlerHybrid,
+  searchHandlerSomeExtendedHybrid,
   locateHandler,
   embedHandler
 }

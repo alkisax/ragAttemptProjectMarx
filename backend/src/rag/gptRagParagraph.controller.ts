@@ -24,7 +24,7 @@ const askWithContext = async (req: Request, res: Response) => {
   try {
     // η ερώτηση string από το frontend
     // και προαιρετικά ένα μικρό ιστορικό των τελευταίων 4 ερωτοαπαντήσεων
-    const { query, history } = req.body
+    const { query, history, pastDiscussionSummary } = req.body
 
     if (!query || typeof query !== 'string') {
       return res.status(400).json({ status: false, message: 'Missing query text' })
@@ -38,6 +38,8 @@ const askWithContext = async (req: Request, res: Response) => {
           )
           .join('\n')
       : ''
+
+    const pastBlock = pastDiscussionSummary?.trim() || '(none yet)'
 
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) {
@@ -75,6 +77,9 @@ const askWithContext = async (req: Request, res: Response) => {
       
       Recent conversation:
       ${chatHistory || '(no previous context)'}
+
+      Cumulative summary of earlier discussions:
+      ${pastBlock}
 
       Use the following excerpts from *Capital* as factual context to answer the user's question.
       Stay faithful to Marx’s terminology and reasoning.
@@ -123,7 +128,7 @@ const askWithContext = async (req: Request, res: Response) => {
 // -------------------------------------------------------------
 const askWithContextExtended = async (req: Request, res: Response) => {
   try {
-    const { query, history } = req.body
+    const { query, history, pastDiscussionSummary } = req.body
 
     if (!query || typeof query !== 'string') {
       return res.status(400).json({ status: false, message: 'Missing query text' })
@@ -135,6 +140,8 @@ const askWithContextExtended = async (req: Request, res: Response) => {
           `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`
         ).join('\n')
       : ''
+
+    const pastBlock = pastDiscussionSummary?.trim() || '(none yet)'
 
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) {
@@ -170,6 +177,9 @@ const askWithContextExtended = async (req: Request, res: Response) => {
       Recent conversation:
       ${chatHistory || '(no previous context)'}
 
+      Cumulative summary of earlier discussions:
+      ${pastBlock}
+
       Use the following extended excerpts (each ±3 paragraphs) as factual context.
       Stay faithful to Marx’s terminology and reasoning.
       Avoid speculation; rely only on the given context.
@@ -201,10 +211,167 @@ const askWithContextExtended = async (req: Request, res: Response) => {
   }
 }
 
+// 💣💣 14 💥💥αυτό προστέθηκε μετά το βήμα 13 ο σκοπός είναι να φτιαχτεί index με βάση το κείμενο ωστε να κάνουμε hybrid search με semantic και με BM25 (text-based)
+// οι δύο παρακάτω functions έιναι ουσιαστικά ίδιες με τις απο πανω μόνο που αντι να καλουν τα ${backendUrl}/api/vectorise/search-some-extended καλούν τα αντίστοιχα hybrid search endpoints
+
+// -------------------------------------------------------------
+// POST /api/rag/ask-hybrid
+// -------------------------------------------------------------
+const askWithContextHybrid = async (req: Request, res: Response) => {
+  try {
+    const { query, history, pastDiscussionSummary } = req.body
+
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ status: false, message: 'Missing query text' })
+    }
+
+    // 1️⃣ προετοιμασία ιστορικού και περίληψης
+    const chatHistory = Array.isArray(history)
+      ? history.map((h: { role: string; content: string }) =>
+          `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`
+        ).join('\n')
+      : ''
+
+    const pastBlock = pastDiscussionSummary?.trim() || '(none yet)'
+    const apiKey = process.env.OPENAI_API_KEY
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001'
+
+    if (!apiKey) return res.status(500).json({ status: false, message: 'OPENAI_API_KEY not set' })
+
+    // 2️⃣ Hybrid search (BM25 + vector)
+    console.log('⚙️ Running hybrid search...')
+    const response = await axios.post(`${backendUrl}/api/vectorise/search-hybrid`, { query })
+    const hybridResults = response.data.data
+
+    if (!hybridResults || !Array.isArray(hybridResults)) {
+      return res.status(500).json({ status: false, message: 'No hybrid context found' })
+    }
+
+    // 3️⃣ Context block
+    const context = hybridResults
+      .map(
+        (r: any, i: number) =>
+          `Excerpt ${i + 1} (Paragraph ${r.paragraphNumber ?? '?'}):\n${r.text ?? ''}`
+      )
+      .join('\n\n')
+
+    // 4️⃣ Prompt
+    const prompt = `
+      You are a scholarly assistant specializing in Karl Marx’s *Das Kapital*.
+
+      Recent conversation:
+      ${chatHistory || '(no previous context)'}
+
+      Cumulative summary of earlier discussions:
+      ${pastBlock}
+
+      Use the following hybrid search results (semantic + text relevance)
+      as factual context. Stay faithful to Marx’s terminology and reasoning.
+
+      Context:
+      ${context}
+
+      Question:
+      ${query}
+
+      Answer:
+    `.trim()
+
+    console.log('🧠 Sending hybrid RAG prompt to OpenAI...')
+    const gptAnswer = await getGPTResponse(prompt, apiKey)
+
+    return res.json({
+      status: true,
+      question: query,
+      answer: gptAnswer,
+      context: hybridResults
+    })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Unknown error'
+    return res.status(500).json({ status: false, message: msg })
+  }
+}
+
+// -------------------------------------------------------------
+// POST /api/rag/ask-extended-hybrid
+// -------------------------------------------------------------
+const askWithContextExtendedHybrid = async (req: Request, res: Response) => {
+  try {
+    const { query, history, pastDiscussionSummary } = req.body
+
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ status: false, message: 'Missing query text' })
+    }
+
+    const chatHistory = Array.isArray(history)
+      ? history.map((h: { role: string; content: string }) =>
+          `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`
+        ).join('\n')
+      : ''
+
+    const pastBlock = pastDiscussionSummary?.trim() || '(none yet)'
+    const apiKey = process.env.OPENAI_API_KEY
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001'
+
+    if (!apiKey) return res.status(500).json({ status: false, message: 'OPENAI_API_KEY not set' })
+
+    console.log('🧩 Fetching extended hybrid context (±2 paragraphs)...')
+    const response = await axios.post(`${backendUrl}/api/vectorise/search-some-extended-hybrid`, { query })
+    const extendedHybridResults = response.data.data
+
+    if (!extendedHybridResults || !Array.isArray(extendedHybridResults)) {
+      return res.status(500).json({ status: false, message: 'No extended hybrid context found' })
+    }
+
+    const context = extendedHybridResults
+      .map(
+        (r: any, i: number) =>
+          `Excerpt ${i + 1} (Paragraph ${r.paragraphNumber ?? '?'}):\n${r.mergedText ?? ''}`
+      )
+      .join('\n\n')
+
+    const prompt = `
+      You are a scholarly assistant specializing in Karl Marx’s *Das Kapital*.
+
+      Recent conversation:
+      ${chatHistory || '(no previous context)'}
+
+      Cumulative summary of earlier discussions:
+      ${pastBlock}
+
+      Use the following hybrid results (BM25 + vector) with ±2 paragraph context.
+      Stay faithful to Marx’s terminology and reasoning.
+
+      Context:
+      ${context}
+
+      Question:
+      ${query}
+
+      Answer:
+    `.trim()
+
+    console.log('🧠 Sending hybrid-extended RAG prompt to OpenAI...')
+    const gptAnswer = await getGPTResponse(prompt, apiKey)
+
+    return res.json({
+      status: true,
+      question: query,
+      answer: gptAnswer,
+      context: extendedHybridResults
+    })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Unknown error'
+    return res.status(500).json({ status: false, message: msg })
+  }
+}
+
 // -------------------------------------------------------------
 // export
 // -------------------------------------------------------------
 export const gptRagParagraphController = {
   askWithContext,
-  askWithContextExtended
+  askWithContextExtended,
+  askWithContextHybrid,
+  askWithContextExtendedHybrid
 }

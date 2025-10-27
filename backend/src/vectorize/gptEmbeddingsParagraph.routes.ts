@@ -18,6 +18,10 @@ router.post('/search', gptEmbeddingsParagraphController.searchHandler)
 router.post('/search-extended', gptEmbeddingsParagraphController.searchHandlerExtended)
 router.post('/search-some-extended', gptEmbeddingsParagraphController.searchHandlerSomeExtended)
 router.post('/locate', gptEmbeddingsParagraphController.locateHandler)
+
+router.post('/search-hybrid', gptEmbeddingsParagraphController.searchHandlerHybrid)
+router.post('/search-some-extended-hybrid', gptEmbeddingsParagraphController.searchHandlerSomeExtendedHybrid)
+
 // ⚠️
 router.post('/embed', gptEmbeddingsParagraphController.embedHandler)
 
