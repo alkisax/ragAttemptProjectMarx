@@ -18,4 +18,5 @@ export interface ParagraphType {
   text?: string | null
   hasFootnotes?: string[] | null
   vector?: number[]
+  score?: number
 }

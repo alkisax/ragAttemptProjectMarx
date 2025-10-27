@@ -10,6 +10,7 @@ import type { Request, Response } from 'express'
 import dotenv from 'dotenv'
 import { gptEmbeddingsService } from '../vectorize/gptEmbeddingsParagraph.service'
 import { getGPTResponse } from './gptRag.service'
+import { ParagraphType } from '../types/paragraph.types'
 
 dotenv.config() // μπορεί να αφαιρεθεί, αλλά δεν πειράζει αν μείνει — δεν είναι standalone
 
@@ -41,7 +42,21 @@ const askWithContext = async (req: Request, res: Response) => {
     }
 
     // 1️⃣ semantic search — βρίσκουμε τις 5 πιο κοντινές παραγράφους
-    const topParagraphs = await gptEmbeddingsService.semanticSearchParagraphs(query, 5)
+    // αυτή είναι η παλιά "χειροκίνητη" μεθοδος που ήταν πολύ αργή και την αντικαταστήσαμε με την semanticSearchParagraphsVector
+    // const topParagraphs = await gptEmbeddingsService.semanticSearchParagraphs(query, 5)
+
+    let topParagraphs: ParagraphType[] = []
+    try {
+      console.log('using mongo vector search');
+      // fast Mongo vector search
+      topParagraphs = await gptEmbeddingsService.semanticSearchParagraphsVector(query, 5)
+    } catch (err) {
+      // old search
+      console.error('❌ Vector search failed:', JSON.stringify(err, null, 2))
+      console.warn('⚠️ Vector search unavailable, falling back to JS cosine search')
+      topParagraphs = await gptEmbeddingsService.semanticSearchParagraphs(query, 5)
+    }
+
 
     // 2️⃣ δημιουργία context string
     const context = topParagraphs

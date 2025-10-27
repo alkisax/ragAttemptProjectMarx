@@ -1,3 +1,5 @@
+// backend\src\vectorize\gptEmbeddingsParagraph.controller.ts
+
 /*
   7.
   💥 Δύο controller συναρτήσεις:
@@ -45,7 +47,7 @@ const searchHandlerExtended = async (req: Request, res: Response) => {
       return res.status(400).json({ status: false, message: 'Missing query in body' })
     }
 
-    // 🔹 Κάνουμε semantic search για τις 5 πιο κοντινές
+    // 🔹 1️⃣ Semantic search — top 5 matches
     const topMatches = await gptEmbeddingsService.semanticSearchParagraphs(query, 5)
     const expandedResults = []
 
@@ -53,20 +55,32 @@ const searchHandlerExtended = async (req: Request, res: Response) => {
       const { book, chapter, paragraphNumber } = match
       const pNum = Number(paragraphNumber)
 
-      // 🔹 Φέρνουμε ±3 παραγράφους γύρω από το αποτέλεσμα
-      const context = await Paragraph.find({
-        book,
-        chapter,
-        paragraphNumber: { $gte: Number(pNum) - 3, $lte: Number(pNum) + 3 },
-        type: 'text'
-      })
-        .sort({ paragraphNumber: 1 })
-        .lean()
+      // 🔹 2️⃣ Context paragraphs ±3 (handles numeric or string paragraphNumbers)
+      // 🔹 Fetch ±3 paragraphs (casting paragraphNumber strings to numbers)
+      const context = await Paragraph.aggregate([
+        {
+          $addFields: {
+            paragraphNum: { $toDouble: '$paragraphNumber' } // cast to number
+          }
+        },
+        {
+          $match: {
+            book,
+            chapter,
+            type: 'text',
+            paragraphNum: { $gte: pNum - 3, $lte: pNum + 3 }
+          }
+        },
+        { $sort: { paragraphNum: 1 } }
+      ])
 
-      // 🔹 Δημιουργούμε ενιαίο string με όλο το context για GPT prompt
-      const mergedText = context.map(p => p.text).join(' ')
+      // 🔹 3️⃣ Merge context paragraphs (fallback if none found)
+      const mergedText =
+        context.length > 0
+          ? context.map(p => p.text).filter(Boolean).join(' ')
+          : match.text ?? ''
 
-
+      // 🔹 4️⃣ Push result summary
       expandedResults.push({
         book: match.book,
         chapter: match.chapter,
@@ -75,11 +89,9 @@ const searchHandlerExtended = async (req: Request, res: Response) => {
         subsectionTitle: match.subsectionTitle,
         subsubsectionTitle: match.subsubsectionTitle,
         paragraphNumber: match.paragraphNumber,
-        // κρατάμε μόνο τα βασικά στοιχεία του match
         centerParagraph: {
           _id: match._id,
           paragraphNumber: match.paragraphNumber,
-          // 🧩 δείχνει μόνο τις πρώτες 5 λέξεις
           text: match.text
             ? match.text.split(/\s+/).slice(0, 5).join(' ') + '...'
             : '',
@@ -89,6 +101,7 @@ const searchHandlerExtended = async (req: Request, res: Response) => {
       })
     }
 
+    // 🔹 5️⃣ Return all enriched matches
     return res.status(200).json({
       status: true,
       count: expandedResults.length,
