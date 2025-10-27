@@ -18,6 +18,8 @@ import Paragraph from '../paragraph/paragraph.model'
 // -------------------------------------------------------------
 //  GET /api/vectorize/search
 // -------------------------------------------------------------
+// αυτή εδώ δεν χρησιμοποιήτε στο backend\src\rag\gptRagParagraph.controller.ts οποτε δεν έχει και καμια χρήση άλλη εκτός του testing
+// αυτό μου επιστρέφει απλως τις κοντινες νοηματικα παραγράφους χωρις δημιουργεία κάποιου κειμένου απο το chatgpt
 const searchHandler = async (req: Request, res: Response) => {
   try {
     const { query } = req.body
@@ -27,14 +29,16 @@ const searchHandler = async (req: Request, res: Response) => {
     }
 
     // Κάνουμε vectorize την ερώτηση και semantic search στα paragraphs
-    const results = await gptEmbeddingsService.semanticSearchParagraphs(query, 5)
+    // old 🐌
+    // const results = await gptEmbeddingsService.semanticSearchParagraphs(query, 5)
+    // new mongo vector search 🐇
+    const results = await gptEmbeddingsService.semanticSearchParagraphsVector(query, 5)
 
     return res.status(200).json({ status: true, data: results })
   } catch (error) {
     return handleControllerError(res, error);
   }
 }
-
 
 // -------------------------------------------------------------
 // 2️⃣ searchHandlerExtended (επεκτεταμένο με context ±3 παραγράφους)
@@ -48,7 +52,10 @@ const searchHandlerExtended = async (req: Request, res: Response) => {
     }
 
     // 🔹 1️⃣ Semantic search — top 5 matches
-    const topMatches = await gptEmbeddingsService.semanticSearchParagraphs(query, 5)
+    // old 🐌
+    // const topMatches = await gptEmbeddingsService.semanticSearchParagraphs(query, 5)
+    // new mongo vector search 🐇
+    const topMatches = await gptEmbeddingsService.semanticSearchParagraphsVector(query, 5)
     const expandedResults = []
 
     for (const match of topMatches) {
@@ -113,6 +120,86 @@ const searchHandlerExtended = async (req: Request, res: Response) => {
 }
 
 // -------------------------------------------------------------
+// 2️⃣ searchHandlerSomeExtended (επεκτεταμένο με context ±2 παραγράφους)
+// -------------------------------------------------------------
+// αυτή είναι copy paste της ακριβώς απο πάνω. μόνο που αντ για ±3 → ±2
+const searchHandlerSomeExtended = async (req: Request, res: Response) => {
+  try {
+    const { query } = req.body
+
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ status: false, message: 'Missing query in body' })
+    }
+
+    // 🔹 1️⃣ Semantic search — top 5 matches
+    // old 🐌
+    // const topMatches = await gptEmbeddingsService.semanticSearchParagraphs(query, 5)
+    // new mongo vector search 🐇
+    const topMatches = await gptEmbeddingsService.semanticSearchParagraphsVector(query, 5)
+    const expandedResults = []
+
+    for (const match of topMatches) {
+      const { book, chapter, paragraphNumber } = match
+      const pNum = Number(paragraphNumber)
+
+      // 🔹 2️⃣ Context paragraphs ±3 (handles numeric or string paragraphNumbers)
+      // 🔹 Fetch ±3 paragraphs (casting paragraphNumber strings to numbers)
+      const context = await Paragraph.aggregate([
+        {
+          $addFields: {
+            paragraphNum: { $toDouble: '$paragraphNumber' } // cast to number
+          }
+        },
+        {
+          $match: {
+            book,
+            chapter,
+            type: 'text',
+            paragraphNum: { $gte: pNum - 2, $lte: pNum + 2 }
+          }
+        },
+        { $sort: { paragraphNum: 1 } }
+      ])
+
+      // 🔹 3️⃣ Merge context paragraphs (fallback if none found)
+      const mergedText =
+        context.length > 0
+          ? context.map(p => p.text).filter(Boolean).join(' ')
+          : match.text ?? ''
+
+      // 🔹 4️⃣ Push result summary
+      expandedResults.push({
+        book: match.book,
+        chapter: match.chapter,
+        chapterTitle: match.chapterTitle,
+        sectionTitle: match.sectionTitle,
+        subsectionTitle: match.subsectionTitle,
+        subsubsectionTitle: match.subsubsectionTitle,
+        paragraphNumber: match.paragraphNumber,
+        centerParagraph: {
+          _id: match._id,
+          paragraphNumber: match.paragraphNumber,
+          text: match.text
+            ? match.text.split(/\s+/).slice(0, 5).join(' ') + '...'
+            : '',
+          score: match.score
+        },
+        mergedText
+      })
+    }
+
+    // 🔹 5️⃣ Return all enriched matches
+    return res.status(200).json({
+      status: true,
+      count: expandedResults.length,
+      data: expandedResults
+    })
+  } catch (error) {
+    return handleControllerError(res, error)
+  }
+}
+
+// -------------------------------------------------------------
 //  POST /api/vectorize/locate
 //  💥 Επιστρέφει τα κεφάλαια στα οποία γίνεται συζήτηση για ένα θέμα
 //  (π.χ. “surplus value”, “commodity fetishism” κλπ.)
@@ -129,7 +216,10 @@ const locateHandler = async (req: Request, res: Response) => {
 
     // Κάνουμε semantic search στις παραγράφους για το query
     // Ζητάμε τις 20 πιο σχετικές παραγράφους συνολικά (top 20)
-    const matches = await gptEmbeddingsService.semanticSearchParagraphs(query, 20)
+    // new mongo vector search 🐇
+    const matches = await gptEmbeddingsService.semanticSearchParagraphsVector(query, 20)
+    // old 🐌
+    // const matches = await gptEmbeddingsService.semanticSearchParagraphs(query, 20)
 
     // Θέλουμε να ομαδοποιήσουμε τα αποτελέσματα ανά βιβλίο + κεφάλαιο.
     // Θα έχουμε ένα object με κλειδί π.χ. "book 1-10"
@@ -200,6 +290,7 @@ const embedHandler = async (req: Request, res: Response) => {
 export const gptEmbeddingsParagraphController = {
   searchHandler,
   searchHandlerExtended,
+  searchHandlerSomeExtended,
   locateHandler,
   embedHandler
 }

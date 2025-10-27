@@ -13,10 +13,12 @@ import { gptEmbeddingsParagraphController } from './gptEmbeddingsParagraph.contr
 
 const router = Router()
 
-// βασικές λειτουργίες RAG
+// αυτό μου επιστρέφει απλως τις κοντινες νοηματικα παραγράφους χωρις δημιουργεία κάποιου κειμένου απο το chatgpt
 router.post('/search', gptEmbeddingsParagraphController.searchHandler)
 router.post('/search-extended', gptEmbeddingsParagraphController.searchHandlerExtended)
+router.post('/search-some-extended', gptEmbeddingsParagraphController.searchHandlerSomeExtended)
 router.post('/locate', gptEmbeddingsParagraphController.locateHandler)
+// ⚠️
 router.post('/embed', gptEmbeddingsParagraphController.embedHandler)
 
 export default router

@@ -17,5 +17,6 @@ const router = express.Router()
 // Κάνει semantic search, φτιάχνει prompt, και καλεί GPT για απάντηση.
 // -------------------------------------------------------------
 router.post('/ask', gptRagParagraphController.askWithContext)
+router.post('/ask-extended', gptRagParagraphController.askWithContextExtended)
 
 export default router
