@@ -1,35 +1,44 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// frontend\src\App.tsx
+/*
+  σχόλια για όλο το front:
+  εχουμε 2 βασικά components:
+    chat cntainer: η handleAsk κάνει axios.post<RagResponse>(`${backendUrl}/api/rag/ask`, { query })
+    και κάνει render το background το βασικό κουτι και το κουτί διαλόγου
+    MessageBubble: μου κάνει render τα στοιχεία του διαλόγου (και το expandable με τις πηγές)
+    ( το RagChat είναι ένα δοκιμαστικό αρχείο που δεν καλείτε κάπου )
+*/
 
-function App() {
-  const [count, setCount] = useState(0)
+import { VariablesProvider } from './context/VariablesContext'
+import { CssBaseline } from '@mui/material'
+import { ThemeProvider, createTheme } from '@mui/material'
+import ChatContainer from './components/ChatContainer'
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+// 🌙 Define dark theme
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    background: {
+      default: '#121212',
+      paper: '#1e1e1e',
+    },
+    primary: {
+      main: '#ffcc00', // yellowish tone
+    },
+  },
+  typography: {
+    allVariants: {
+      color: '#fff',
+    },
+  },
+})
+
+const App = () => (
+  <ThemeProvider theme={darkTheme}>
+    <CssBaseline />
+    <VariablesProvider>
+      <ChatContainer />
+    </VariablesProvider>
+  </ThemeProvider>
+)
 
 export default App
