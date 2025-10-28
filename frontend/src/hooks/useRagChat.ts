@@ -5,12 +5,14 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import type { ExtendedParagraph, Message, ParagraphBase, ParagraphContext, RagResponse } from '../types/types'
 import { useVariables } from '../context/VariablesContext'
+import { useRagMemory } from './useRagMemory'
 
 export const useRagChat = () => {
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const { backendUrl } = useVariables()
+  const { memory, handleNewAnswer } = useRagMemory()
 
   const universalAskHandler = async (
     urlExtension: 'ask' | 'ask-extended' | 'ask-hybrid' | 'ask-extended-hybrid'
@@ -23,8 +25,27 @@ export const useRagChat = () => {
     setQuery('')
 
     try {
-      const res = await axios.post<RagResponse>(`${backendUrl}/api/rag/${urlExtension}`, { query })
+      // 🧠 Debug: inspect payload before sending to backend
+      console.log('🚀 [universalAskHandler] Sending ask request:', {
+        endpoint: `${backendUrl}/api/rag/${urlExtension}`,
+        payload: {
+          query,
+          pastDiscussionSummary: memory.pastSummary
+            ? memory.pastSummary.slice(0, 300) + (memory.pastSummary.length > 300 ? '…' : '')
+            : '(none)'
+        }
+      })
+      
+      const res = await axios.post<RagResponse>(`${backendUrl}/api/rag/${urlExtension}`, {
+        query,
+        pastDiscussionSummary: memory.pastSummary
+      })
       const { answer, context } = res.data
+
+      // immediately summarize and update rolling memory
+      const newSummary = await handleNewAnswer(query, answer)
+      console.log('🧠 Updated cumulative summary:', newSummary)
+
       const normalized = normalizeContext(context, urlExtension) // δες παρακατω σχόλιο
 
       const assistantMsg: Message = {
