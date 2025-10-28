@@ -125,7 +125,7 @@ export const useRagChat = () => {
 
   }
 
-  return { query, setQuery, messages, loading, handleAsk, handleAskExtended, handleAskHybrid,handleAskExtendedHybrid }
+  return { query, setQuery, messages, loading, handleAsk, handleAskExtended, handleAskHybrid,handleAskExtendedHybrid, memory }
 }
 
 

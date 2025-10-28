@@ -8,10 +8,10 @@
     ( το RagChat είναι ένα δοκιμαστικό αρχείο που δεν καλείτε κάπου )
 */
 
-import { VariablesProvider } from './context/VariablesContext'
 import { CssBaseline } from '@mui/material'
 import { ThemeProvider, createTheme } from '@mui/material'
-import ChatContainer from './components/ChatContainer'
+import ResponsiveLayout from './layout/ResponsiveLayout'
+import { Route, Routes } from 'react-router-dom'
 
 // 🌙 Define dark theme
 const darkTheme = createTheme({
@@ -35,9 +35,12 @@ const darkTheme = createTheme({
 const App = () => (
   <ThemeProvider theme={darkTheme}>
     <CssBaseline />
-    <VariablesProvider>
-      <ChatContainer />
-    </VariablesProvider>
+
+        <Routes>
+          {/* use same / path, render responsive layout */}
+          <Route path="/*" element={<ResponsiveLayout />} />
+        </Routes>
+
   </ThemeProvider>
 )
 

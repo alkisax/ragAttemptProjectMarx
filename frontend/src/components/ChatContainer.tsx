@@ -1,14 +1,17 @@
 // frontend\src\components\ChatContainer.tsx
 
 import { Box, CircularProgress } from '@mui/material'
-import { useRagChat } from '../hooks/useRagChat'
+// import { useRagChat } from '../hooks/useRagChat'
+import { useRagChatContext } from '../context/RagChatContext'
 import MessageBubble from './MessageBubble'
 import HeaderLogo from './HeaderLogo'
 import SendBtn from './SendBtn'
 
 const ChatContainer = () => {
-  // 🧠 παίρνουμε όλη τη λογική από το custom hook
-  const { query, setQuery, messages, loading, handleAskExtendedHybrid } = useRagChat()
+
+  // αυτο λειτουργούσε καλά αλλα τελικά φτιάξαμε το RagChatContext για να μπορούμε να έχουμε σε όλα τα components τις ίδιες πληροφορίες ταυτόχρονα
+  // const { query, setQuery, messages, loading, handleAskExtendedHybrid } = useRagChat()
+  const { query, setQuery, messages, loading, handleAskExtendedHybrid } = useRagChatContext()
 
   return (
     // Εξωτερικό φόντο — σκούρο γκρι, κεντράρει το μαύρο κουτί
@@ -25,11 +28,11 @@ const ChatContainer = () => {
       {/* Μαύρο κουτί */}
       <Box
         sx={{
-          width: '90%',
-          maxWidth: 700,
-          minHeight: '85vh',
+          width: { xs: '90%', lg: '100%' },           // take full width only on lg+
+          maxWidth: { xs: 700, lg: 'none' },          // remove maxWidth limit on lg+
+          minHeight: { xs: '85vh', lg: '100vh' },     // stretch vertically on lg+
           bgcolor: 'background.default',
-          borderRadius: 3,
+          borderRadius: { xs: 3, lg: 0 },             // remove rounded corners for full-screen look
           boxShadow: '0 0 15px rgba(0,0,0,0.5)',
           display: 'flex',
           flexDirection: 'column',
@@ -38,11 +41,15 @@ const ChatContainer = () => {
           p: 4,
         }}
       >
-        {/* Logo + Title */}
-        <HeaderLogo />
+        {/* Logo + Title — visible only on desctop lg */}
+        <Box sx={{ display: { md: 'block', lg: 'none' } }}>
+          <HeaderLogo />
+        </Box>
 
         {/* Chat */}
-        <Box sx={{ width: '100%' }}>
+        <Box 
+          sx={{ width: '100%' }}
+        >
           <Box
             sx={{
               mb: 3,

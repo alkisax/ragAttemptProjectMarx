@@ -16,6 +16,7 @@ const MessageBubble = ({ message }: Props) => {
       sx={{
         display: 'flex',
         justifyContent: isUser ? 'flex-end' : 'flex-start',
+        width: '100%',
         my: 1,
       }}
     >
@@ -26,7 +27,10 @@ const MessageBubble = ({ message }: Props) => {
           px: 2,
           py: 1,
           borderRadius: 2,
-          maxWidth: '80%',
+          maxWidth: { xs: '85%', lg: '90%' },  // bubble size relative to chat width
+          alignSelf: 'flex-start',             // prevent centering vertically
+          wordBreak: 'break-word',             // break long tokens gracefully
+          whiteSpace: 'pre-wrap',
           boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
         }}
       >
