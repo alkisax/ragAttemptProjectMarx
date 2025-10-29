@@ -284,7 +284,7 @@ const hybridSearchParagraphs = async (query: string, topN = 5) => {
         cosine: obj.cosine,
         bm25: obj.bm25,
         // finalScore: 0.7 * (obj.cosine / cosMax) + 0.3 * (obj.bm25 / bmMax) // ⚠️⚠️⚠️⚠️ 70% vector / 30% bm25
-        finalScore: 0.3 * (obj.cosine / cosMax) + 0.7 * (obj.bm25 / bmMax) // ⚠️⚠️⚠️⚠️ 70% vector / 30% bm25
+        finalScore: 0.5 * (obj.cosine / cosMax) + 0.5 * (obj.bm25 / bmMax) // ⚠️⚠️⚠️⚠️ 50% vector / 50% bm25
       }
     })
   )
