@@ -35,12 +35,10 @@ const darkTheme = createTheme({
 const App = () => (
   <ThemeProvider theme={darkTheme}>
     <CssBaseline />
-
-        <Routes>
-          {/* use same / path, render responsive layout */}
-          <Route path="/*" element={<ResponsiveLayout />} />
-        </Routes>
-
+      <Routes>
+        {/* use same / path, render responsive layout */}
+        <Route path="/*" element={<ResponsiveLayout />} />
+      </Routes>
   </ThemeProvider>
 )
 

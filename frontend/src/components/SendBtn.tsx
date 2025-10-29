@@ -24,7 +24,7 @@ const SendBtn = ({ query, setQuery, handleAsk, loading}: Props) => {
     <Box sx={{ display: 'flex', gap: 1 }}>
       <TextField
         fullWidth
-        label="Ask about Marx's Capital..."
+        label="Ask about Marx's Capital!..."
         variant='filled'
         value={query}
         onChange={e => setQuery(e.target.value)}
