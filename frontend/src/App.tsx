@@ -12,6 +12,7 @@ import { CssBaseline } from '@mui/material'
 import { ThemeProvider, createTheme } from '@mui/material'
 import ResponsiveLayout from './layout/ResponsiveLayout'
 import { Route, Routes } from 'react-router-dom'
+import StripeSuccessListener from './components/StripeSuccessListener'
 
 // 🌙 Define dark theme
 const darkTheme = createTheme({
@@ -35,6 +36,7 @@ const darkTheme = createTheme({
 const App = () => (
   <ThemeProvider theme={darkTheme}>
     <CssBaseline />
+    <StripeSuccessListener />
     <Routes>
       {/* use same / path, render responsive layout */}
       <Route path="/*" element={<ResponsiveLayout />} />

@@ -1,6 +1,7 @@
 // frontend\src\components\ChatContainer.tsx
 
-import { Box, CircularProgress, FormControl, FormControlLabel, Radio, RadioGroup } from '@mui/material'
+import { Box, Button, CircularProgress, FormControl, FormControlLabel, Radio, RadioGroup } from '@mui/material'
+import { Link as RouterLink } from 'react-router-dom'
 // import { useRagChat } from '../hooks/useRagChat'
 import { useRagChatContext } from '../context/RagChatContext'
 import MessageBubble from './MessageBubble'
@@ -107,6 +108,19 @@ const ChatContainer = () => {
             handleAsk={handleAsk}
             loading={loading}
           />
+
+          {/* ✅ Buy me a coffee link */}
+          <Box sx={{ textAlign: 'center', mt: 2 }}>
+            <Button
+              component={RouterLink}
+              to='/checkout'
+              variant='outlined'
+              color='warning'
+              sx={{ mt: 2, borderRadius: 2, fontWeight: 600 }}
+            >
+              ☕ Buy me a coffee
+            </Button>
+          </Box>
 
         </Box>
       </Box>

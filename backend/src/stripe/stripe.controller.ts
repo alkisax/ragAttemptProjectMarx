@@ -24,6 +24,8 @@ const createCheckoutSession = async (req: Request, res: Response): Promise<void>
 // 2️⃣ Handle Success Route (called by Stripe after successful pay)
 // ---------------------------------------------------------------
 // επειδή το τεστ γινόνταν με κανονικα λεφτα κράτησα μερικα url επιστροφής.
+// http://localhost:5173/success?success=true&session_id=cs_live_a1IFuqog2PoU5HNXKFt81GAPOlduJc0c3YbfZuZiEko3xAarddwMDooLS5
+
 // αν τα βάλεις στον browser θα συμπεριφερθει σαν επιτυχεία συναλαγής
 // δημιουργόντας transaction και ανανεώνοντας τον participant.
 const handleSuccess = async (req: Request, res: Response): Promise<Response> => {
@@ -34,7 +36,7 @@ const handleSuccess = async (req: Request, res: Response): Promise<Response> => 
       return res.status(400).send('Missing session ID.')
     }
 
-    return res.send('Success! Your donation was recorded. Thank you!')
+    return res.send('Thank you so much for your donation. Your generosity means everything to us and to the community we serve.')
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
     console.error('Error processing success route:', msg)

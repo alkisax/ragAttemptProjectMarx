@@ -9,13 +9,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string)
 // constants
 const QUANTITY = 1
 
-
 // -----------------------------
 // 1️⃣ Create Checkout Session
 // -----------------------------
 export const createCheckoutSession = async (
   priceId: string
-): Promise<Stripe.Checkout.Session> => {
+): Promise<{ id: string; url: string | null }> => {
   if (!process.env.STRIPE_SECRET_KEY) {
     throw new Error('Missing STRIPE_SECRET_KEY in environment')
   }
@@ -38,7 +37,7 @@ export const createCheckoutSession = async (
     cancel_url: `${FRONTEND_URL}/cancel?canceled=true`,
   })
 
-  return session
+  return { id: session.id, url: session.url }
 }
 
 // -----------------------------
