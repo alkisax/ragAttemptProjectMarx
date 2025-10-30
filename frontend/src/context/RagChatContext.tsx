@@ -11,16 +11,17 @@ interface RagChatContextType {
   setQuery: Dispatch<SetStateAction<string>>
   loading: boolean
   handleAskExtendedHybrid: () => Promise<void>
+  handleAskHybridBook1: () => Promise<void>
   memory: RagMemoryState 
 }
 
 const RagChatContext = createContext<RagChatContextType | null>(null)
 
 export const RagChatProvider = ({ children }: { children: React.ReactNode }) => {
-  const { messages, query, setQuery, loading, handleAskExtendedHybrid, memory } = useRagChat()
+  const { messages, query, setQuery, loading, handleAskExtendedHybrid, handleAskHybridBook1, memory } = useRagChat()
 
   return (
-    <RagChatContext.Provider value={{ messages, query, setQuery, loading, handleAskExtendedHybrid, memory }}>
+    <RagChatContext.Provider value={{ messages, query, setQuery, loading, handleAskExtendedHybrid, handleAskHybridBook1, memory }}>
       {children}
     </RagChatContext.Provider>
   )

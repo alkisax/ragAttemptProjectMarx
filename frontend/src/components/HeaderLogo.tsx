@@ -1,59 +1,68 @@
-// frontend\src\components\HeaderLogo.tsx
-
 import { Box, Typography } from '@mui/material'
 import gramota from '../assets/gramota.jpg'
 
 function HeaderLogo() {
   return (
-    <div>
-      <Box sx={{ textAlign: 'center', mb: 4 }}>
-        {/* only visible on lg */}
-        <Box sx={{ display: { md: 'block', lg: 'none' } }}>
-          <img
-            src={gramota}
-            alt='flying promitheus'
-            style={{
-              width: '180px',
-              borderRadius: '12px',
-              marginBottom: '12px',
-            }}
-          />
-        </Box>
+    <Box
+      sx={{
+        textAlign: 'center',
+        mb: 4,
+        display: 'flex',
+        flexDirection: { xs: 'row', md: 'row', lg: 'column' }, // side-by-side on small, stacked on lg
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: { xs: 2, lg: 0 }
+      }}
+    >
+      {/* 🖼️ Image */}
+      <Box
+        component='img'
+        src={gramota}
+        alt='flying prometheus'
+        sx={{
+          display: { md: 'block', lg: 'none' },
+          width: { xs: 80, sm: 100, md: 120, lg: 180 },
+          borderRadius: '12px',
+          mb: { lg: 2 }, // only add bottom margin on stacked layout
+        }}
+      />
 
-        <Box
+      {/* 📜 Title block */}
+      <Box
+        sx={{
+          bgcolor: { xs: 'transparent', lg: 'rgba(0, 0, 0, 0.6)' },
+          p: { xs: 0, lg: 2 },
+          borderRadius: 2,
+          display: 'inline-block',
+          textAlign: { xs: 'left', lg: 'center' },
+        }}
+      >
+        <Typography
+          variant='h4'
           sx={{
-            bgcolor: 'rgba(0, 0, 0, 0.6)', // semi-transparent dark background
-            p: 2,                          // padding
-            borderRadius: 2,               // soft corners
-            display: 'inline-block',       // shrink to fit text
-            textAlign: 'center'
+            color: '#ffcc00',
+            fontWeight: 'bold',
+            letterSpacing: 2,
+            fontSize: { xs: '1.5rem', sm: '1.8rem', lg: '2.2rem' },
           }}
         >
-          <Typography
-            variant='h3'
-            sx={{
-              color: '#ffcc00',
-              fontWeight: 'bold',
-              letterSpacing: 2
-            }}
-          >
-            Das Kapital
-          </Typography>
+          Das Kapital
+        </Typography>
 
-          <Typography
-            variant='h6'
-            sx={{
-              color: '#ffcc00',
-              fontWeight: 400,
-              letterSpacing: 2,
-              mt: 1
-            }}
-          >
-            AI assistant for Karl Marx – ‘The Capital’
-          </Typography>
-        </Box>
+        <Typography
+          variant='subtitle1'
+          sx={{
+            color: '#ffcc00',
+            fontWeight: 400,
+            letterSpacing: 1,
+            mt: { xs: 0.5, lg: 1 },
+            fontSize: { xs: '0.85rem', sm: '0.95rem', lg: '1.1rem' },
+          }}
+        >
+          AI assistant for Karl Marx – ‘The Capital’
+        </Typography>
       </Box>
-    </div>
+    </Box>
   )
 }
 

@@ -15,7 +15,7 @@ export const useRagChat = () => {
   const { memory, handleNewAnswer } = useRagMemory()
 
   const universalAskHandler = async (
-    urlExtension: 'ask' | 'ask-extended' | 'ask-hybrid' | 'ask-extended-hybrid'
+    urlExtension: 'ask' | 'ask-extended' | 'ask-hybrid' | 'ask-extended-hybrid' | 'ask-hybrid-book1'
   ) => {
     if (!query.trim()) return
 
@@ -79,15 +79,19 @@ export const useRagChat = () => {
     universalAskHandler('ask-extended-hybrid')
   }
 
+  const handleAskHybridBook1 = async () => {
+    universalAskHandler('ask-hybrid-book1')
+  }
+
   // ένα πρόβλημα που έχουμε είναι πως η ask και η ask-extended επιστρέφουν ένα obj με διαφορετικά fields οπότε θα πρέπει να κάνουμε normalise το ένα στο άλλο (💣 ΥΓ στο τελος)
   const normalizeContext = (
     context:  (ParagraphBase | ExtendedParagraph)[],
-    mode: 'ask' | 'ask-extended' | 'ask-hybrid' | 'ask-extended-hybrid'
+    mode: 'ask' | 'ask-extended' | 'ask-hybrid' | 'ask-extended-hybrid' | 'ask-hybrid-book1'
   ): ParagraphContext[] => {
 
     if (!Array.isArray(context)) return []
 
-    if (mode === 'ask' || mode === 'ask-hybrid') {
+    if (mode === 'ask' || mode === 'ask-hybrid' || mode === 'ask-hybrid-book1') {
       return context.map(p => ({
         paragraphNoTotal: (p as ParagraphBase).paragraphNumber ?? '?',
         text: (p as ParagraphBase).text ?? '',
@@ -122,10 +126,9 @@ export const useRagChat = () => {
     }
 
     return [] // fallback for future modes
-
   }
 
-  return { query, setQuery, messages, loading, handleAsk, handleAskExtended, handleAskHybrid,handleAskExtendedHybrid, memory }
+  return { query, setQuery, messages, loading, handleAsk, handleAskExtended, handleAskHybrid,handleAskExtendedHybrid, handleAskHybridBook1, memory }
 }
 
 
