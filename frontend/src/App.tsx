@@ -13,6 +13,7 @@ import { ThemeProvider, createTheme } from '@mui/material'
 import ResponsiveLayout from './layout/ResponsiveLayout'
 import { Route, Routes } from 'react-router-dom'
 import StripeSuccessListener from './components/StripeSuccessListener'
+import Checkout from './stripe/Checkout'
 
 // 🌙 Define dark theme
 const darkTheme = createTheme({
@@ -40,6 +41,7 @@ const App = () => (
     <Routes>
       {/* use same / path, render responsive layout */}
       <Route path="/*" element={<ResponsiveLayout />} />
+      <Route path='/checkout' element={<Checkout />} />
     </Routes>
   </ThemeProvider>
 )

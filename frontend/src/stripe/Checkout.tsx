@@ -1,3 +1,5 @@
+// frontend\src\stripe\Checkout.tsx
+
 import { loadStripe } from '@stripe/stripe-js'
 import axios from 'axios'
 import threeCoins from '../assets/three_coins.svg.png'
@@ -6,6 +8,9 @@ import { Box, Button, Card, CardContent, CardMedia, Container, Typography } from
 const BACKEND_URL = 'http://localhost:3001'
 const PUBLIC_STRIPE_KEY = import.meta.env.VITE_PUBLIC_STRIPE_KEY as string
 const PRICE_ID_2E = import.meta.env.VITE_PRICE_ID_2E as string
+// console.log('🔗 BACKEND_URL =', BACKEND_URL)
+// console.log('🔑 PUBLIC_STRIPE_KEY =', PUBLIC_STRIPE_KEY)
+// console.log('💵 PRICE_ID_2E =', PRICE_ID_2E)
 
 const stripePromise = loadStripe(PUBLIC_STRIPE_KEY)
 

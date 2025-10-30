@@ -518,20 +518,23 @@ curl http://49.12.76.128/mao/api/ping; echo
 ```
 ### deploy changes
 ```bash
+ssh root@49.12.76.128
+cd /var/www
 cd ragAttemptProjectMarx/
 git pull origin main
 cd frontend
+nano .env
 npm install
 npm run build
-```
-if needed .env
-`pm2 restart <app-name> --update-env`
-
+cd ../backend
+nano .env
+npm install
+npm run build
+pm2 list
+pm2 restart marx-rag --update-env
 curl http://localhost:3002/api/ping
-
-if config changes
-```bash
 nginx -t
 systemctl reload nginx
+curl http://localhost:3002/api/ping
 ```
-πρέπει να κάνουμε build και το backend
+

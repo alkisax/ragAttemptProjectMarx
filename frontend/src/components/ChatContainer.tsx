@@ -117,6 +117,9 @@ const ChatContainer = () => {
               variant='outlined'
               color='warning'
               sx={{ mt: 2, borderRadius: 2, fontWeight: 600 }}
+              onClick={() => {
+                console.log('☕ Buy Me a Coffee button clicked → navigating to /checkout')
+              }}
             >
               ☕ Buy me a coffee
             </Button>
