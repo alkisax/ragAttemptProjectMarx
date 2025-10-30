@@ -532,4 +532,6 @@ curl http://localhost:3002/api/ping
 if config changes
 ```bash
 nginx -t
-syste
+systemctl reload nginx
+```
+πρέπει να κάνουμε build και το backend

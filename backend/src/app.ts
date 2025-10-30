@@ -11,12 +11,11 @@ import path from 'path';
 // import rateLimit from 'express-rate-limit';
 // import helmet from 'helmet';
 
-  // import scraperRoutes from './scraper/scraper.routes';
-  import vectoriseRoutes from './vectorize/gptEmbeddingsParagraph.routes'
-  import gptRagParagraphRoutes from './rag/gptRagParagraph.routes'
-  import ragMemoryRoutes from './ragMemory/RagMemory.routes'
-
-
+// import scraperRoutes from './scraper/scraper.routes';
+import vectoriseRoutes from './vectorize/gptEmbeddingsParagraph.routes'
+import gptRagParagraphRoutes from './rag/gptRagParagraph.routes'
+import ragMemoryRoutes from './ragMemory/RagMemory.routes'
+import stripeRoutes from './stripe/stripe.routes'
 
 const app = express();
 
@@ -130,6 +129,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/vectorise', vectoriseRoutes)
 app.use('/api/rag', gptRagParagraphRoutes)
 app.use('/api/rag-memory', ragMemoryRoutes)
+app.use('/api/stripe', stripeRoutes)
 
 app.use(express.static('dist')); 
 

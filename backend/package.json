@@ -24,6 +24,7 @@
     "express": "^5.1.0",
     "mongoose": "^8.19.2",
     "playwright": "^1.56.1",
+    "stripe": "^19.2.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
