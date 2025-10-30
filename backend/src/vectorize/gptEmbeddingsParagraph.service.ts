@@ -295,6 +295,7 @@ const hybridSearchParagraphs = async (query: string, topN = 5) => {
   // 7. Επιστρέφουμε τα topN
   return combined.slice(0, topN)
 }
+
 // -------------------------------------------------------------
 // 💣15. 💥Hybrid search μόνο για Book 1
 // -------------------------------------------------------------
@@ -302,36 +303,21 @@ const hybridSearchParagraphs = async (query: string, topN = 5) => {
   in → query: text, topN: number
   out → N paragraphs
 */
+
 const hybridSearchParagraphsBook1 = async (query: string, topN = 5) => {
-  // πριν φώναζε απευθείας την semanticSearchParagraphsVector
-  const queryVector = await getEmbedding(query)
+  console.log('⚙️ Running hybrid search for Book 1...', query)
 
-  // Semantic vector search ΜΟΝΟ για Book 1
-  const vectorResults = await Paragraph.aggregate([
-    {
-      $vectorSearch: {
-        index: 'vector_index',
-        path: 'vector',
-        queryVector,
-        numCandidates: 100,
-        limit: topN * 2,
-        filter: { book: 'Book 1' } // 🧩 μόνο Book 1
-      }
-    },
-    {
-      $project: {
-        score: { $meta: 'vectorSearchScore' },
-        book: 1,
-        chapter: 1,
-        chapterTitle: 1,
-        sectionTitle: 1,
-        paragraphNumber: 1,
-        text: 1
-      }
-    }
-  ])
+  // 1️⃣ Semantic search
+  const vectorResultsAll = await gptEmbeddingsService.semanticSearchParagraphsVector(query, topN * 4)
+  console.log('📚 vectorResultsAll length:', vectorResultsAll.length)
 
-  // BM25 (full-text) search μόνο για Book 1
+  // 🔍 Keep only Book 1 paragraphs
+  const vectorResults = vectorResultsAll
+    .filter(p => p.book === 'book 1')
+    .slice(0, topN)
+  console.log('📘 vectorResults (Book 1 only) length:', vectorResults.length)
+
+  // 2️⃣ BM25 full-text search — only Book 1
   const bm25Results = await Paragraph.find({
     $text: { $search: query },
     book: 'Book 1'
@@ -340,8 +326,9 @@ const hybridSearchParagraphsBook1 = async (query: string, topN = 5) => {
     .sort({ score: { $meta: 'textScore' } })
     .limit(topN * 2)
     .lean()
+  console.log('🔡 bm25Results length:', bm25Results.length)
 
-  // Ενοποίηση
+  // 3️⃣ Combine scores
   const scoreMap = new Map<string, { cosine: number; bm25: number; text: string }>()
   for (const v of vectorResults) {
     scoreMap.set(String(v._id), { cosine: v.score ?? 0, bm25: 0, text: v.text ?? '' })
@@ -352,39 +339,50 @@ const hybridSearchParagraphsBook1 = async (query: string, topN = 5) => {
     else scoreMap.set(String(b._id), { cosine: 0, bm25: b.score ?? 0, text: b.text ?? '' })
   }
 
-  // Normalization
+  console.log('🧮 scoreMap size:', scoreMap.size)
+
+  // 4️⃣ Normalization
   const cosVals = Array.from(scoreMap.values()).map(v => v.cosine)
   const bmVals = Array.from(scoreMap.values()).map(v => v.bm25)
   const cosMax = Math.max(...cosVals, 1)
   const bmMax = Math.max(...bmVals, 1)
+  console.log('📈 cosMax:', cosMax, 'bmMax:', bmMax)
 
-  // Συνδυασμός
-  const combined = await Promise.all(
-    Array.from(scoreMap.entries()).map(async ([id, obj]) => {
-      const paragraph = await Paragraph.findById(id)
-        .select('book chapter paragraphNumber chapterTitle sectionTitle subsectionTitle subsubsectionTitle text')
-        .lean()
+  // 5️⃣ Combine into unified list
+  const ids = Array.from(scoreMap.keys())
+  console.log('🆔 fetching paragraphs for ids length:', ids.length)
+  const paragraphs = await Paragraph.find({ _id: { $in: ids } })
+    .select('book chapter paragraphNumber chapterTitle sectionTitle subsectionTitle subsubsectionTitle text')
+    .lean()
+  console.log('📄 fetched paragraphs length:', paragraphs.length)
 
-      return {
-        _id: id,
-        book: paragraph?.book ?? null,
-        chapter: paragraph?.chapter ?? null,
-        paragraphNumber: paragraph?.paragraphNumber ?? null,
-        chapterTitle: paragraph?.chapterTitle ?? null,
-        sectionTitle: paragraph?.sectionTitle ?? null,
-        subsectionTitle: paragraph?.subsectionTitle ?? null,
-        subsubsectionTitle: paragraph?.subsubsectionTitle ?? null,
-        text: obj.text,
-        cosine: obj.cosine,
-        bm25: obj.bm25,
-        finalScore: 0.5 * (obj.cosine / cosMax) + 0.5 * (obj.bm25 / bmMax)
-      }
-    })
-  )
+  const combined = Array.from(scoreMap.entries()).map(([id, obj]) => {
+    const paragraph = paragraphs.find(p => String(p._id) === id)
+    return {
+      _id: id,
+      book: paragraph?.book ?? null,
+      chapter: paragraph?.chapter ?? null,
+      paragraphNumber: paragraph?.paragraphNumber ?? null,
+      chapterTitle: paragraph?.chapterTitle ?? null,
+      sectionTitle: paragraph?.sectionTitle ?? null,
+      subsectionTitle: paragraph?.subsectionTitle ?? null,
+      subsubsectionTitle: paragraph?.subsubsectionTitle ?? null,
+      text: obj.text,
+      cosine: obj.cosine,
+      bm25: obj.bm25,
+      finalScore: 0.5 * (obj.cosine / cosMax) + 0.5 * (obj.bm25 / bmMax)
+    }
+  })
 
+  console.log('✅ combined length:', combined.length)
+
+  // 6️⃣ Sort and return
   combined.sort((a, b) => b.finalScore - a.finalScore)
-  return combined.slice(0, topN)
+  const final = combined.slice(0, topN)
+  console.log('🎯 Returning topN:', final.length)
+  return final
 }
+
 
 export const gptEmbeddingsService = {
   getEmbedding,

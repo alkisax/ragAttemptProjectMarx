@@ -5,7 +5,7 @@
 
   prev → backend\src\rag\gptRagParagraph.controller.ts
   next → frontend integration
-  13,14,15 είναι διασπαρτα παρα πίσω. 13 → λειτουργία μνήμης και summariser, 14 → hybrid search (50%vector+50%MB25), 15 → αναζήτηση μόνο σε book1
+  13,14,15 είναι διασπαρτα παρα πίσω. 12,13 → λειτουργία μνήμης και summariser, 14 → hybrid search (50%vector+50%MB25), 15 → αναζήτηση μόνο σε book1
 */
 
 import express from 'express'

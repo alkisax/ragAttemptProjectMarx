@@ -299,21 +299,37 @@ const searchHandlerSomeExtendedHybrid = async (req: Request, res: Response) => {
 }
 
 // -------------------------------------------------------------
-// 💣15.💥Hybrid search μόνο για Book 1
+// 💣15.💥 Hybrid search μόνο για Book 1 (χωρίς ±2 context)
 // -------------------------------------------------------------
 const searchHandlerHybridBook1 = async (req: Request, res: Response) => {
   try {
     const { query } = req.body
+
     if (!query || typeof query !== 'string') {
-      return res.status(400).json({ status: false, message: 'Missing query' })
+      return res.status(400).json({ status: false, message: 'Missing query in body' })
     }
 
-    const results = await gptEmbeddingsService.hybridSearchParagraphsBook1(query, 5)
+    // Μικτή αναζήτηση (BM25 + Semantic) ΜΟΝΟ για Book 1
+    const topMatches = await gptEmbeddingsService.hybridSearchParagraphsBook1(query, 5)
+
+    // Δεν επεκτείνουμε με ±2, επιστρέφουμε τις ίδιες παραγράφους με metadata
+    const plainResults = topMatches.map(match => ({
+      _id: match._id,
+      book: match.book,
+      chapter: match.chapter,
+      chapterTitle: match.chapterTitle,
+      sectionTitle: match.sectionTitle,
+      subsectionTitle: match.subsectionTitle,
+      subsubsectionTitle: match.subsubsectionTitle,
+      paragraphNumber: match.paragraphNumber,
+      text: match.text,
+      score: match.finalScore // use hybrid score
+    }))
 
     return res.status(200).json({
       status: true,
-      count: results.length,
-      data: results
+      count: plainResults.length,
+      data: plainResults
     })
   } catch (error) {
     return handleControllerError(res, error)
