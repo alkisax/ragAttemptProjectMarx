@@ -295,13 +295,104 @@ const hybridSearchParagraphs = async (query: string, topN = 5) => {
   // 7. Επιστρέφουμε τα topN
   return combined.slice(0, topN)
 }
+// -------------------------------------------------------------
+// 💣15. 💥Hybrid search μόνο για Book 1
+// -------------------------------------------------------------
+/*
+  in → query: text, topN: number
+  out → N paragraphs
+*/
+const hybridSearchParagraphsBook1 = async (query: string, topN = 5) => {
+  // πριν φώναζε απευθείας την semanticSearchParagraphsVector
+  const queryVector = await getEmbedding(query)
+
+  // Semantic vector search ΜΟΝΟ για Book 1
+  const vectorResults = await Paragraph.aggregate([
+    {
+      $vectorSearch: {
+        index: 'vector_index',
+        path: 'vector',
+        queryVector,
+        numCandidates: 100,
+        limit: topN * 2,
+        filter: { book: 'Book 1' } // 🧩 μόνο Book 1
+      }
+    },
+    {
+      $project: {
+        score: { $meta: 'vectorSearchScore' },
+        book: 1,
+        chapter: 1,
+        chapterTitle: 1,
+        sectionTitle: 1,
+        paragraphNumber: 1,
+        text: 1
+      }
+    }
+  ])
+
+  // BM25 (full-text) search μόνο για Book 1
+  const bm25Results = await Paragraph.find({
+    $text: { $search: query },
+    book: 'Book 1'
+  })
+    .select({ text: 1, score: { $meta: 'textScore' } })
+    .sort({ score: { $meta: 'textScore' } })
+    .limit(topN * 2)
+    .lean()
+
+  // Ενοποίηση
+  const scoreMap = new Map<string, { cosine: number; bm25: number; text: string }>()
+  for (const v of vectorResults) {
+    scoreMap.set(String(v._id), { cosine: v.score ?? 0, bm25: 0, text: v.text ?? '' })
+  }
+  for (const b of bm25Results) {
+    const existing = scoreMap.get(String(b._id))
+    if (existing) existing.bm25 = b.score ?? 0
+    else scoreMap.set(String(b._id), { cosine: 0, bm25: b.score ?? 0, text: b.text ?? '' })
+  }
+
+  // Normalization
+  const cosVals = Array.from(scoreMap.values()).map(v => v.cosine)
+  const bmVals = Array.from(scoreMap.values()).map(v => v.bm25)
+  const cosMax = Math.max(...cosVals, 1)
+  const bmMax = Math.max(...bmVals, 1)
+
+  // Συνδυασμός
+  const combined = await Promise.all(
+    Array.from(scoreMap.entries()).map(async ([id, obj]) => {
+      const paragraph = await Paragraph.findById(id)
+        .select('book chapter paragraphNumber chapterTitle sectionTitle subsectionTitle subsubsectionTitle text')
+        .lean()
+
+      return {
+        _id: id,
+        book: paragraph?.book ?? null,
+        chapter: paragraph?.chapter ?? null,
+        paragraphNumber: paragraph?.paragraphNumber ?? null,
+        chapterTitle: paragraph?.chapterTitle ?? null,
+        sectionTitle: paragraph?.sectionTitle ?? null,
+        subsectionTitle: paragraph?.subsectionTitle ?? null,
+        subsubsectionTitle: paragraph?.subsubsectionTitle ?? null,
+        text: obj.text,
+        cosine: obj.cosine,
+        bm25: obj.bm25,
+        finalScore: 0.5 * (obj.cosine / cosMax) + 0.5 * (obj.bm25 / bmMax)
+      }
+    })
+  )
+
+  combined.sort((a, b) => b.finalScore - a.finalScore)
+  return combined.slice(0, topN)
+}
 
 export const gptEmbeddingsService = {
   getEmbedding,
   cosineSimilarity,
   semanticSearchParagraphs,
   semanticSearchParagraphsVector,
-  hybridSearchParagraphs
+  hybridSearchParagraphs,
+  hybridSearchParagraphsBook1
 }
 
 /* --- οδηγίες για δημιουργεία vector index στο mongo compass ---

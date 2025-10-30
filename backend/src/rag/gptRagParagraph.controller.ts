@@ -215,7 +215,7 @@ const askWithContextExtended = async (req: Request, res: Response) => {
 // οι δύο παρακάτω functions έιναι ουσιαστικά ίδιες με τις απο πανω μόνο που αντι να καλουν τα ${backendUrl}/api/vectorise/search-some-extended καλούν τα αντίστοιχα hybrid search endpoints
 
 // -------------------------------------------------------------
-// POST /api/rag/ask-hybrid
+// 14. POST /api/rag/ask-hybrid
 // -------------------------------------------------------------
 const askWithContextHybrid = async (req: Request, res: Response) => {
   try {
@@ -293,7 +293,7 @@ const askWithContextHybrid = async (req: Request, res: Response) => {
 }
 
 // -------------------------------------------------------------
-// POST /api/rag/ask-extended-hybrid
+// 14. POST /api/rag/ask-extended-hybrid
 // -------------------------------------------------------------
 const askWithContextExtendedHybrid = async (req: Request, res: Response) => {
   try {
@@ -367,11 +367,95 @@ const askWithContextExtendedHybrid = async (req: Request, res: Response) => {
 }
 
 // -------------------------------------------------------------
+// 💣15.💥 POST /api/rag/ask-hybrid-book1
+// -------------------------------------------------------------
+const askWithContextHybridBook1 = async (req: Request, res: Response) => {
+  try {
+    const { query, history, pastDiscussionSummary } = req.body
+
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ status: false, message: 'Missing query text' })
+    }
+
+    // 1️⃣ Ιστορικό συνομιλίας
+    const chatHistory = Array.isArray(history)
+      ? history
+          .map((h: { role: string; content: string }) =>
+            `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`
+          )
+          .join('\n')
+      : ''
+
+    const pastBlock = pastDiscussionSummary?.trim() || '(none yet)'
+
+    const apiKey = process.env.OPENAI_API_KEY
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001'
+
+    if (!apiKey) {
+      return res.status(500).json({ status: false, message: 'OPENAI_API_KEY not set' })
+    }
+
+    // 2️⃣ Hybrid search ΜΟΝΟ για Book 1
+    console.log('⚙️ Running hybrid search for Book 1...')
+    const response = await axios.post(`${backendUrl}/api/vectorise/search-hybrid-book1`, { query })
+    const hybridResults = response.data.data
+
+    if (!Array.isArray(hybridResults) || hybridResults.length === 0) {
+      return res.status(500).json({ status: false, message: 'No Book 1 context found' })
+    }
+
+    // 3️⃣ Δημιουργία context
+    const context = hybridResults
+      .map(
+        (r: any, i: number) =>
+          `Excerpt ${i + 1} (Paragraph ${r.paragraphNumber ?? '?'}):\n${r.text ?? ''}`
+      )
+      .join('\n\n')
+
+    // 4️⃣ Prompt
+    const prompt = `
+      You are a scholarly assistant specializing in Karl Marx’s *Das Kapital*, Book 1 only.
+
+      Recent conversation:
+      ${chatHistory || '(no previous context)'}
+
+      Cumulative summary of earlier discussions:
+      ${pastBlock}
+
+      Use the following Book 1 hybrid search results (semantic + text relevance)
+      as factual context. Stay faithful to Marx’s terminology and reasoning.
+
+      Context:
+      ${context}
+
+      Question:
+      ${query}
+
+      Answer:
+    `.trim()
+
+    console.log('🧠 Sending Book 1 hybrid RAG prompt to OpenAI...')
+    const gptAnswer = await getGPTResponse(prompt, apiKey)
+
+    return res.json({
+      status: true,
+      question: query,
+      answer: gptAnswer,
+      context: hybridResults
+    })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Unknown error'
+    return res.status(500).json({ status: false, message: msg })
+  }
+}
+
+// -------------------------------------------------------------
 // export
 // -------------------------------------------------------------
 export const gptRagParagraphController = {
   askWithContext,
   askWithContextExtended,
   askWithContextHybrid,
-  askWithContextExtendedHybrid
+  askWithContextExtendedHybrid,
+  askWithContextHybridBook1
 }

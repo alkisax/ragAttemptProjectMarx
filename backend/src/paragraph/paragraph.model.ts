@@ -28,5 +28,7 @@ const paragraphSchema = new mongoose.Schema<ParagraphType>({
 // next → backend\src\vectorize\gptEmbeddingsParagraph.service.ts
 // τρέχει μονο μια φορα και μετα ελέγχει αν υπάρχει.
 paragraphSchema.index({ text: 'text' })
+// 💣15.💥
+paragraphSchema.index({ book: 1 })
 
 export default mongoose.model<ParagraphType>('Paragraph', paragraphSchema)

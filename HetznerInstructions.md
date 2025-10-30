@@ -516,3 +516,20 @@ curl http://49.12.76.128/api/ping; echo
 curl http://49.12.76.128/capital/api/ping; echo
 curl http://49.12.76.128/mao/api/ping; echo
 ```
+### deploy changes
+```bash
+cd ragAttemptProjectMarx/
+git pull origin main
+cd frontend
+npm install
+npm run build
+```
+if needed .env
+`pm2 restart <app-name> --update-env`
+
+curl http://localhost:3002/api/ping
+
+if config changes
+```bash
+nginx -t
+syste

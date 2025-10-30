@@ -299,6 +299,28 @@ const searchHandlerSomeExtendedHybrid = async (req: Request, res: Response) => {
 }
 
 // -------------------------------------------------------------
+// 💣15.💥Hybrid search μόνο για Book 1
+// -------------------------------------------------------------
+const searchHandlerHybridBook1 = async (req: Request, res: Response) => {
+  try {
+    const { query } = req.body
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ status: false, message: 'Missing query' })
+    }
+
+    const results = await gptEmbeddingsService.hybridSearchParagraphsBook1(query, 5)
+
+    return res.status(200).json({
+      status: true,
+      count: results.length,
+      data: results
+    })
+  } catch (error) {
+    return handleControllerError(res, error)
+  }
+}
+
+// -------------------------------------------------------------
 //  POST /api/vectorize/locate
 //  💥 Επιστρέφει τα κεφάλαια στα οποία γίνεται συζήτηση για ένα θέμα
 //  (π.χ. “surplus value”, “commodity fetishism” κλπ.)
@@ -392,6 +414,7 @@ export const gptEmbeddingsParagraphController = {
   searchHandlerSomeExtended,
   searchHandlerHybrid,
   searchHandlerSomeExtendedHybrid,
+  searchHandlerHybridBook1,
   locateHandler,
   embedHandler
 }
