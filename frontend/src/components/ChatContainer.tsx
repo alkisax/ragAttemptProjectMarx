@@ -84,7 +84,7 @@ const ChatContainer = () => {
           <Box
             sx={{
               mb: 3,
-              height: { xs: '60vh', lg: '83vh' },
+              height: { xs: '59vh', lg: '83vh' },
               overflowY: 'auto',
               border: '1px solid #333',
               borderRadius: 2,
