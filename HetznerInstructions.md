@@ -532,7 +532,6 @@ npm install
 npm run build
 pm2 list
 pm2 restart marx-rag --update-env
-curl http://localhost:3002/api/ping
 nginx -t
 systemctl reload nginx
 curl http://localhost:3002/api/ping

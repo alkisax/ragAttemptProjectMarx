@@ -25,7 +25,7 @@ const StripeSuccessListener = () => {
         })
         .finally(() => {
           // clean URL so you stay on home
-          window.history.replaceState({}, '', '/')
+          window.history.replaceState({}, '', '/capital/')
         })
     }
   }, [location])
