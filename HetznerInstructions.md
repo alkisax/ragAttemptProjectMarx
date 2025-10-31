@@ -581,21 +581,26 @@ Approximate round trip times in milli-seconds:
 ```
 
 συνδέομαι στον server
-ssh root@49.12.76.128
+`ssh root@49.12.76.128`
 
 Εγκατέστησε Certbot (αν δεν υπάρχει):
+```bash
 sudo apt update
 sudo apt install certbot python3-certbot-nginx -y
+```
 
-αυτό Θα κάνει αυτόματα: Έλεγχο DNS, Δημιουργία SSL certificate, Προσθήκη HTTPS config στο Nginx.
+αυτό Θα κάνει αυτόματα: Έλεγχο DNS, Δημιουργία SSL certificate, Προσθήκη HTTPS 
+```bash
+config στο Nginx.
 sudo certbot --nginx -d portfolio-projects.space -d www.portfolio-projects.space
+```
 
 έλεγχος
-sudo systemctl reload nginx
+`sudo systemctl reload nginx`
 και επισκεψη στο https://portfolio-projects.space
 
-Τώρα πρέπει να ενημερώσουμε το nginx config ώστε το domain σου να δείχνει προς τα projects που ήδη τρέχουν (kuhn, marx, mao).
-sudo nano /etc/nginx/sites-available/portfolio-projects.space
+Τώρα πρέπει να ενημερώσουμε το nginx config ώστε το domain σου να δείχνει προς τα projects που ήδη τρέχουν (kuhn, marx, mao). 
+`sudo nano /etc/nginx/sites-available/portfolio-projects.space`
 
 ```nginx
 # Redirect HTTP → HTTPS
@@ -648,10 +653,12 @@ server {
 ```
 
 Ενεργοποίηση
+```bash
 sudo ln -s /etc/nginx/sites-available/portfolio-projects.space /etc/nginx/sites-enabled/
 sudo rm /etc/nginx/sites-enabled/default
 sudo nginx -t
 sudo systemctl reload nginx
+```
 
 αλλάζω τα .env 
 απο 
