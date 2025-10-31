@@ -662,3 +662,4 @@ VITE_BACKEND_URL=https://portfolio-projects.space/capital
 FRONTEND_URL=http://49.12.76.128/capital/
 σε
 FRONTEND_URL=http://portfolio-projects.space/capital/
+χρειάζετε restart για να φορτωθούν τα .env
