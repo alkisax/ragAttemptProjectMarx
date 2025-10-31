@@ -474,7 +474,7 @@ server {
   listen 80;
   server_name 49.12.76.128;
 
-  # 🧠 Kuhn app → main site (/)
+  # Kuhn app → main site (/)
   location / {
     proxy_pass http://localhost:3002;
     proxy_http_version 1.1;
@@ -484,7 +484,7 @@ server {
     proxy_cache_bypass $http_upgrade;
   }
 
-  # 📘 Marx app → served under /capital
+  # Marx app → served under /capital
   location /capital/ {
     rewrite ^/capital(/.*)$ $1 break;
     proxy_pass http://localhost:3001;
@@ -495,7 +495,7 @@ server {
     proxy_cache_bypass $http_upgrade;
   }
 
-  # 🔴 Mao app → served under /mao
+  # Mao app → served under /mao
   location /mao/ {
     rewrite ^/mao(/.*)$ $1 break;
     proxy_pass http://localhost:3003;
@@ -537,3 +537,128 @@ systemctl reload nginx
 curl http://localhost:3002/api/ping
 ```
 
+οι ίδιες εντολές χωρίς nano για .env για να τις κάνω copy paste
+```bash
+ssh root@49.12.76.128
+cd /var/www
+cd ragAttemptProjectMarx/
+git pull origin main
+cd frontend
+npm install
+npm run build
+cd ../backend
+npm install
+npm run build
+pm2 list
+pm2 restart marx-rag --update-env
+nginx -t
+systemctl reload nginx
+curl http://localhost:3002/api/ping
+```
+```bash
+cd /var/www && cd ragAttemptProjectMarx && git pull origin main && cd frontend && npm install && npm run build && cd ../backend && npm install && npm run build && pm2 list && pm2 restart marx-rag --update-env && nginx -t && systemctl reload nginx && curl http://localhost:3002/api/ping; echo
+```
+# domain
+// αγοράστικε το portfolio-projects.space απο namecheap 1.98$ 31/10/2025
+Στον πίνακα Namecheap → Domain List → portfolio-projects.space → Advanced DNS
+| Type | Host  | Value (IP address) | TTL       |
+| ---- | ----- | ------------------ | --------- |
+| A    | `@`   | `49.12.76.128`     | Automatic |
+| A    | `www` | `49.12.76.128`     | Automatic |
+
+εκανα `ping portfolio-projects.space` και έλαβα
+```
+Pinging portfolio-projects.space [49.12.76.128] with 32 bytes of data:
+Reply from 49.12.76.128: bytes=32 time=78ms TTL=43
+Reply from 49.12.76.128: bytes=32 time=1070ms TTL=43
+Reply from 49.12.76.128: bytes=32 time=78ms TTL=43
+Reply from 49.12.76.128: bytes=32 time=99ms TTL=43
+
+Ping statistics for 49.12.76.128:
+    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),
+Approximate round trip times in milli-seconds:
+    Minimum = 78ms, Maximum = 1070ms, Average = 331ms
+```
+
+συνδέομαι στον server
+ssh root@49.12.76.128
+
+Εγκατέστησε Certbot (αν δεν υπάρχει):
+sudo apt update
+sudo apt install certbot python3-certbot-nginx -y
+
+αυτό Θα κάνει αυτόματα: Έλεγχο DNS, Δημιουργία SSL certificate, Προσθήκη HTTPS config στο Nginx.
+sudo certbot --nginx -d portfolio-projects.space -d www.portfolio-projects.space
+
+έλεγχος
+sudo systemctl reload nginx
+και επισκεψη στο https://portfolio-projects.space
+
+Τώρα πρέπει να ενημερώσουμε το nginx config ώστε το domain σου να δείχνει προς τα projects που ήδη τρέχουν (kuhn, marx, mao).
+sudo nano /etc/nginx/sites-available/portfolio-projects.space
+
+```nginx
+# Redirect HTTP → HTTPS
+server {
+  listen 80;
+  server_name portfolio-projects.space www.portfolio-projects.space;
+  return 301 https://$host$request_uri;
+}
+
+# HTTPS version
+server {
+  listen 443 ssl;
+  server_name portfolio-projects.space www.portfolio-projects.space;
+
+  ssl_certificate /etc/letsencrypt/live/portfolio-projects.space/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/portfolio-projects.space/privkey.pem;
+
+  # KUHN app → main site (/)
+  location / {
+    proxy_pass http://localhost:3002;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_set_header Host $host;
+    proxy_cache_bypass $http_upgrade;
+  }
+
+  # MARX app → served under /capital
+  location /capital/ {
+    rewrite ^/capital(/.*)$ $1 break;
+    proxy_pass http://localhost:3001;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_set_header Host $host;
+    proxy_cache_bypass $http_upgrade;
+  }
+
+  # MAO app → served under /mao
+  location /mao/ {
+    rewrite ^/mao(/.*)$ $1 break;
+    proxy_pass http://localhost:3003;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_set_header Host $host;
+    proxy_cache_bypass $http_upgrade;
+  }
+}
+```
+
+Ενεργοποίηση
+sudo ln -s /etc/nginx/sites-available/portfolio-projects.space /etc/nginx/sites-enabled/
+sudo rm /etc/nginx/sites-enabled/default
+sudo nginx -t
+sudo systemctl reload nginx
+
+αλλάζω τα .env 
+απο 
+VITE_BACKEND_URL=http://49.12.76.128/capital
+σε
+VITE_BACKEND_URL=https://portfolio-projects.space/capital
+και απο 
+FRONTEND_URL=http://49.12.76.128/capital/
+σε
+FRONTEND_URL=http://portfolio-projects.space/capital/

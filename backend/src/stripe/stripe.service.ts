@@ -1,3 +1,6 @@
+// αγοράστικε το portfolio-projects.space απο namecheap 1.98$ 31/10/2025
+// backend\src\stripe\stripe.service.ts
+
 import Stripe from 'stripe'
 import dotenv from 'dotenv'
 
