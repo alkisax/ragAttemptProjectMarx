@@ -35,6 +35,8 @@ const RootLayout = () => {
           >
             {/* 👇 the “index.tsx” screen = main chat page */}
             <Stack.Screen name="index" options={{ title: 'Das Kapital' }} />
+            <Stack.Screen name="metadata" options={{ title: 'metadata' }} />
+            <Stack.Screen name="buy-me-a-coffee" options={{ title: 'Buy me a coffee' }} />
           </Stack>
         </RagChatProvider>
       </PaperProvider>      

@@ -24,7 +24,7 @@
     "expo-haptics": "~15.0.7",
     "expo-image": "~3.0.10",
     "expo-linking": "~8.0.8",
-    "expo-router": "~6.0.13",
+    "expo-router": "^6.0.14",
     "expo-splash-screen": "~31.0.10",
     "expo-status-bar": "~3.0.8",
     "expo-symbols": "~1.0.7",
@@ -46,6 +46,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "@types/react-native": "^0.72.8",
     "babel-plugin-inline-dotenv": "^1.7.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
