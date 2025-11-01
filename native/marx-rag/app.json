@@ -4,7 +4,7 @@
     "slug": "marx-rag",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/marx.svg",
     "scheme": "marxrag",
     "platforms": ["ios", "android", "web"],
     "userInterfaceStyle": "automatic",

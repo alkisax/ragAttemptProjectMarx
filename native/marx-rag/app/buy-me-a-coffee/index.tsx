@@ -41,7 +41,14 @@ export default function BuyMeACoffee() {
           />
 
           <Text style={styles.donateText}>Donate 2 €</Text>
-          <Text style={styles.subtitle}>Wow, you’re a hero! 💪</Text>
+          <Text style={styles.announcement}>
+            Citizens!{'\n\n'}
+            Every contribution — no matter how small — strengthens our collective effort!{'\n'}
+            Greece still labors under conditions unworthy of its workers. The servers that host our words in Hetzner, the tokens that summon intelligence from OpenAI, remain in the hands of capital.{'\n\n'}
+            Until the means of computation are seized by the people, we must, alas, pay the capitalist toll in their own coin.{'\n\n'}
+            Your donation is solidarity!{'\n'}
+            Long live the workers of all lands!
+          </Text>
 
           <Button
             mode="contained"
@@ -91,6 +98,13 @@ const styles = StyleSheet.create({
     height: 120,
     resizeMode: 'contain',
     marginBottom: 16,
+  },
+  announcement: {
+    color: '#fffae4ff',
+    fontSize: 14,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginBottom: 20,
   },
   donateText: {
     color: '#fff',
