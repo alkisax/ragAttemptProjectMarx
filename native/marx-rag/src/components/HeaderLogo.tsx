@@ -1,21 +1,40 @@
-// native\marx-rag\src\components\HeaderLogo.tsx
 /*
   10.
 */
 import React from 'react'
-import { View, Image, Text } from 'react-native'
+import { View, Image, Text, StyleSheet } from 'react-native'
 
 export default function HeaderLogo() {
   return (
-    <View style={{ alignItems: 'center', marginBottom: 20 }}>
+    <View style={styles.container}>
       <Image
         source={require('../../assets/gramota.jpg')}
-        style={{ width: 100, height: 100, borderRadius: 12 }}
+        style={styles.image}
       />
-      <Text style={{ color: '#ffcc00', fontSize: 24, fontWeight: 'bold', marginTop: 8 }}>
-        Das Kapital
-      </Text>
-      <Text style={{ color: '#ffcc00', fontSize: 14 }}>AI Assistant for Karl Marx</Text>
+      <Text style={styles.title}>Das Kapital</Text>
+      <Text style={styles.subtitle}>AI Assistant for Karl Marx</Text>
     </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  image: {
+    width: 100,
+    height: 100,
+    borderRadius: 12,
+  },
+  title: {
+    color: '#ffcc00',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 8,
+  },
+  subtitle: {
+    color: '#ffcc00',
+    fontSize: 14,
+  },
+})

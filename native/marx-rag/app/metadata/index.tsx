@@ -1,10 +1,9 @@
-// native\marx-rag\metadata\index.tsx
 /*
   .11
 */
 
 import React from 'react'
-import { ScrollView, View } from 'react-native'
+import { ScrollView, View, StyleSheet } from 'react-native'
 import { Text, List, Divider } from 'react-native-paper'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRagChatContext } from '../../src/context/RagChatContext'
@@ -18,54 +17,38 @@ export default function MetadataScreen() {
 
   if (!lastAssistant) {
     return (
-      <View style={{ padding: 16 }}>
-        <Text style={{ color: '#999' }}>No metadata yet. Ask a question to load context.</Text>
+      <View style={styles.noData}>
+        <Text style={styles.noDataText}>No metadata yet. Ask a question to load context.</Text>
       </View>
     )
   }
 
   const lastQuery = messages[messages.length - 2]?.content || '(unknown query)'
-
   const context = lastAssistant.context ?? []
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#121212' }}>
-      <ScrollView
-        style={{
-          flex: 1,
-          backgroundColor: '#121212',
-          padding: 16,
-        }}
-      >
-        <Text
-          style={{
-            color: '#ffcc00',
-            fontSize: 20,
-            fontWeight: 'bold',
-            marginBottom: 16,
-          }}
-        >
-          Latest Query Metadata
-        </Text>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView style={styles.scroll}>
+        <Text style={styles.title}>Latest Query Metadata</Text>
 
         {/* --- Context paragraphs --- */}
         <List.Accordion
           title="Context paragraphs"
-          titleStyle={{ color: '#ffcc00', fontWeight: '600' }}
-          style={{ backgroundColor: '#333', borderRadius: 8 }}
+          titleStyle={styles.accordionTitle}
+          style={styles.accordion}
         >
           {context.map((p, i) => (
-            <View key={i} style={{ marginBottom: 12 }}>
-              <Text style={{ color: '#ffcc00', fontWeight: '600' }}>
+            <View key={i} style={styles.paragraphBox}>
+              <Text style={styles.paragraphHeader}>
                 Paragraph {p.paragraphNoTotal ?? '?'}{' '}
                 {p.score && (
-                  <Text style={{ color: '#999', fontSize: 12 }}>
+                  <Text style={styles.score}>
                     (score: {p.score.toFixed ? p.score.toFixed(3) : p.score})
                   </Text>
                 )}
               </Text>
 
-              <Text style={{ color: '#bbb', fontSize: 13, marginBottom: 2 }}>
+              <Text style={styles.paragraphMeta}>
                 {[
                   p.book && `Book: ${p.book}`,
                   p.chapter && `Chapter: ${p.chapter}`,
@@ -75,11 +58,9 @@ export default function MetadataScreen() {
                   .join(' · ')}
               </Text>
 
-              <Text style={{ color: '#ccc', fontSize: 14 }}>{p.text}</Text>
+              <Text style={styles.paragraphText}>{p.text}</Text>
 
-              {i < context.length - 1 && (
-                <Divider style={{ marginVertical: 6, backgroundColor: '#333' }} />
-              )}
+              {i < context.length - 1 && <Divider style={styles.divider} />}
             </View>
           ))}
         </List.Accordion>
@@ -87,10 +68,10 @@ export default function MetadataScreen() {
         {/* --- Rolling summary --- */}
         <List.Accordion
           title="Rolling Summary"
-          titleStyle={{ color: '#ffcc00', fontWeight: '600' }}
-          style={{ backgroundColor: '#333', borderRadius: 8, marginTop: 16 }}
+          titleStyle={styles.accordionTitle}
+          style={[styles.accordion, styles.marginTop]}
         >
-          <Text style={{ color: '#bbb', fontSize: 14 }}>
+          <Text style={styles.summaryText}>
             {memory.pastSummary || 'No summary yet — ask a few questions first.'}
           </Text>
         </List.Accordion>
@@ -98,33 +79,111 @@ export default function MetadataScreen() {
         {/* --- Recent questions --- */}
         <List.Accordion
           title="Recent Questions"
-          titleStyle={{ color: '#ffcc00', fontWeight: '600' }}
-          style={{ backgroundColor: '#333', borderRadius: 8, marginTop: 16 }}
+          titleStyle={styles.accordionTitle}
+          style={[styles.accordion, styles.marginTop]}
         >
           {memory.entries.length > 0 ? (
             memory.entries.map((e, i) => (
-              <View key={i} style={{ marginBottom: 10 }}>
-                <Text style={{ color: '#ffcc00' }}>
+              <View key={i} style={styles.recentBox}>
+                <Text style={styles.recentQuestion}>
                   Q{i + 1}: {e.query}
                 </Text>
-                <Text style={{ color: '#ccc', marginLeft: 8 }}>↳ {e.summary}</Text>
-                {i < memory.entries.length - 1 && (
-                  <Divider style={{ marginVertical: 6, backgroundColor: '#333' }} />
-                )}
+                <Text style={styles.recentAnswer}>↳ {e.summary}</Text>
+                {i < memory.entries.length - 1 && <Divider style={styles.divider} />}
               </View>
             ))
           ) : (
-            <Text style={{ color: '#999' }}>No previous questions yet.</Text>
+            <Text style={styles.noDataText}>No previous questions yet.</Text>
           )}
         </List.Accordion>
 
         {/* --- Last query --- */}
-        <Text style={{ marginTop: 24, color: '#bbb' }}>
-          <Text style={{ color: '#ffcc00', fontWeight: '600' }}>Query: </Text>
+        <Text style={styles.lastQuery}>
+          <Text style={styles.queryLabel}>Query: </Text>
           {lastQuery}
         </Text>
-      </ScrollView>      
+      </ScrollView>
     </SafeAreaView>
-
   )
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#121212',
+  },
+  scroll: {
+    flex: 1,
+    backgroundColor: '#121212',
+    padding: 16,
+  },
+  title: {
+    color: '#ffcc00',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  accordion: {
+    backgroundColor: '#333',
+    borderRadius: 8,
+  },
+  accordionTitle: {
+    color: '#ffcc00',
+    fontWeight: '600',
+  },
+  paragraphBox: {
+    marginBottom: 12,
+  },
+  paragraphHeader: {
+    color: '#ffcc00',
+    fontWeight: '600',
+  },
+  score: {
+    color: '#999',
+    fontSize: 12,
+  },
+  paragraphMeta: {
+    color: '#bbb',
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  paragraphText: {
+    color: '#ccc',
+    fontSize: 14,
+  },
+  divider: {
+    marginVertical: 6,
+    backgroundColor: '#333',
+  },
+  marginTop: {
+    marginTop: 16,
+  },
+  summaryText: {
+    color: '#bbb',
+    fontSize: 14,
+  },
+  recentBox: {
+    marginBottom: 10,
+  },
+  recentQuestion: {
+    color: '#ffcc00',
+  },
+  recentAnswer: {
+    color: '#ccc',
+    marginLeft: 8,
+  },
+  lastQuery: {
+    marginTop: 24,
+    color: '#bbb',
+  },
+  queryLabel: {
+    color: '#ffcc00',
+    fontWeight: '600',
+  },
+  noData: {
+    padding: 16,
+  },
+  noDataText: {
+    color: '#999',
+  },
+})

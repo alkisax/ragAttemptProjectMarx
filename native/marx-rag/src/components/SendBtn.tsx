@@ -1,9 +1,8 @@
-// native\marx-rag\src\components\SendBtn.tsx
 /*
   9.
 */
 import React from 'react'
-import { View } from 'react-native'
+import { View, StyleSheet } from 'react-native'
 import { TextInput, Button } from 'react-native-paper'
 
 interface Props {
@@ -15,13 +14,13 @@ interface Props {
 
 export default function SendBtn({ query, setQuery, handleAsk, loading }: Props) {
   return (
-    <View style={{ flexDirection: 'row', gap: 8 }}>
+    <View style={styles.container}>
       <TextInput
         mode="flat"
         placeholder="Ask about Marx’s Capital..."
         value={query}
         onChangeText={setQuery}
-        style={{ flex: 1, backgroundColor: '#2a2a2a', color: 'white' }}
+        style={styles.input}
         onSubmitEditing={() => !loading && handleAsk()}
       />
       <Button
@@ -36,3 +35,15 @@ export default function SendBtn({ query, setQuery, handleAsk, loading }: Props) 
     </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: '#2a2a2a',
+    color: 'white',
+  },
+})

@@ -1,9 +1,8 @@
-// app/index.tsx
 /*
   2.
 */
 import React, { useState } from 'react'
-import { KeyboardAvoidingView, Platform, ScrollView, View, ActivityIndicator } from 'react-native'
+import { KeyboardAvoidingView, Platform, ScrollView, View, ActivityIndicator, StyleSheet } from 'react-native'
 import { Button, RadioButton, Text } from 'react-native-paper'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -25,40 +24,30 @@ export default function ChatScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#121212' }}>
-            {/* 📱 KeyboardAvoidingView lifts content when keyboard appears */}
+    <SafeAreaView style={styles.safeArea}>
+      {/* 📱 KeyboardAvoidingView lifts content when keyboard appears */}
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
       >
-        <View style={{ flex: 1, backgroundColor: '#121212', padding: 16 }}>
+        <View style={styles.container}>
           <HeaderLogo />
 
-          <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 8 }}>
+          <View style={styles.modeBox}>
             <RadioButton.Group onValueChange={v => setMode(v as any)} value={mode}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
+              <View style={styles.radioRow}>
                 <RadioButton value="extended" color="#ffcc00" />
-                <Text style={{ color: '#fff' }}>Extended (All Books)</Text>
+                <Text style={styles.radioText}>Extended (All Books)</Text>
               </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={styles.radioRow}>
                 <RadioButton value="book1" color="#ffcc00" />
-                <Text style={{ color: '#fff' }}>Book 1 Only</Text>
+                <Text style={styles.radioText}>Book 1 Only</Text>
               </View>
             </RadioButton.Group>
           </View>
 
-          <ScrollView
-            style={{
-              flex: 1,
-              borderColor: '#333',
-              borderWidth: 1,
-              borderRadius: 10,
-              padding: 10,
-              backgroundColor: '#1a1a1a',
-              marginBottom: 10,
-            }}
-          >
+          <ScrollView style={styles.scroll}>
             {messages.map(msg => (
               <MessageBubble key={msg.id} message={msg} />
             ))}
@@ -70,7 +59,7 @@ export default function ChatScreen() {
           <Button
             mode="outlined"
             textColor="#ffcc00"
-            style={{ marginTop: 12, borderColor: '#ffcc00' }}
+            style={styles.button}
             onPress={() => router.push({ pathname: '/metadata' })}
           >
             📚 View Context
@@ -79,13 +68,54 @@ export default function ChatScreen() {
           <Button
             mode="outlined"
             textColor="#ffcc00"
-            style={{ marginTop: 12, borderColor: '#ffcc00' }}
+            style={styles.button}
             onPress={() => router.push({ pathname: '/buy-me-a-coffee' })}
           >
             ☕ Buy me a coffee
           </Button>
-        </View>       
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#121212',
+  },
+  flex: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#121212',
+    padding: 16,
+  },
+  modeBox: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  radioRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  radioText: {
+    color: '#fff',
+  },
+  scroll: {
+    flex: 1,
+    borderColor: '#333',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
+    backgroundColor: '#1a1a1a',
+    marginBottom: 10,
+  },
+  button: {
+    marginTop: 12,
+    borderColor: '#ffcc00',
+  },
+})
