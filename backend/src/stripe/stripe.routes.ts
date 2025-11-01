@@ -1,3 +1,5 @@
+// backend\src\stripe\stripe.routes.ts
+
 import { stripeController } from './stripe.controller';
 import { Router } from 'express'
 

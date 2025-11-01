@@ -3,8 +3,9 @@
   2.
 */
 import React, { useState } from 'react'
-import { ScrollView, View, ActivityIndicator } from 'react-native'
+import { KeyboardAvoidingView, Platform, ScrollView, View, ActivityIndicator } from 'react-native'
 import { Button, RadioButton, Text } from 'react-native-paper'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useRagChatContext } from '../src/context/RagChatContext'
 import MessageBubble from '../src/components/MessageBubble'
@@ -24,58 +25,67 @@ export default function ChatScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#121212', padding: 16 }}>
-      <HeaderLogo />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#121212' }}>
+            {/* 📱 KeyboardAvoidingView lifts content when keyboard appears */}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+      >
+        <View style={{ flex: 1, backgroundColor: '#121212', padding: 16 }}>
+          <HeaderLogo />
 
-      <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 8 }}>
-        <RadioButton.Group onValueChange={v => setMode(v as any)} value={mode}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
-            <RadioButton value="extended" color="#ffcc00" />
-            <Text style={{ color: '#fff' }}>Extended (All Books)</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 8 }}>
+            <RadioButton.Group onValueChange={v => setMode(v as any)} value={mode}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
+                <RadioButton value="extended" color="#ffcc00" />
+                <Text style={{ color: '#fff' }}>Extended (All Books)</Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <RadioButton value="book1" color="#ffcc00" />
+                <Text style={{ color: '#fff' }}>Book 1 Only</Text>
+              </View>
+            </RadioButton.Group>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <RadioButton value="book1" color="#ffcc00" />
-            <Text style={{ color: '#fff' }}>Book 1 Only</Text>
-          </View>
-        </RadioButton.Group>
-      </View>
 
-      <ScrollView
-        style={{
-          flex: 1,
-          borderColor: '#333',
-          borderWidth: 1,
-          borderRadius: 10,
-          padding: 10,
-          backgroundColor: '#1a1a1a',
-          marginBottom: 10,
-        }}
-      >
-        {messages.map(msg => (
-          <MessageBubble key={msg.id} message={msg} />
-        ))}
-        {loading && <ActivityIndicator size="small" color="#ffcc00" />}
-      </ScrollView>
+          <ScrollView
+            style={{
+              flex: 1,
+              borderColor: '#333',
+              borderWidth: 1,
+              borderRadius: 10,
+              padding: 10,
+              backgroundColor: '#1a1a1a',
+              marginBottom: 10,
+            }}
+          >
+            {messages.map(msg => (
+              <MessageBubble key={msg.id} message={msg} />
+            ))}
+            {loading && <ActivityIndicator size="small" color="#ffcc00" />}
+          </ScrollView>
 
-      <SendBtn query={query} setQuery={setQuery} handleAsk={handleAsk} loading={loading} />
+          <SendBtn query={query} setQuery={setQuery} handleAsk={handleAsk} loading={loading} />
 
-      <Button
-        mode="outlined"
-        textColor="#ffcc00"
-        style={{ marginTop: 12, borderColor: '#ffcc00' }}
-        onPress={() => router.push({ pathname: '/metadata' })}
-      >
-        📚 View Context
-      </Button>
+          <Button
+            mode="outlined"
+            textColor="#ffcc00"
+            style={{ marginTop: 12, borderColor: '#ffcc00' }}
+            onPress={() => router.push({ pathname: '/metadata' })}
+          >
+            📚 View Context
+          </Button>
 
-      <Button
-        mode="outlined"
-        textColor="#ffcc00"
-        style={{ marginTop: 12, borderColor: '#ffcc00' }}
-        onPress={() => router.push({ pathname: '/buy-me-a-coffee' })}
-      >
-        ☕ Buy me a coffee
-      </Button>
-    </View>
+          <Button
+            mode="outlined"
+            textColor="#ffcc00"
+            style={{ marginTop: 12, borderColor: '#ffcc00' }}
+            onPress={() => router.push({ pathname: '/buy-me-a-coffee' })}
+          >
+            ☕ Buy me a coffee
+          </Button>
+        </View>       
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   )
 }

@@ -4,6 +4,7 @@
 ```bash
 npm install @react-navigation/native @react-navigation/native-stack
 npx expo install react-native-screens react-native-safe-area-context
+npx expo install react-native-keyboard-aware-scroll-view
 npm install axios
 npm install react-native-dotenv
 ```

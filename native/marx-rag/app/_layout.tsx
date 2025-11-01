@@ -9,6 +9,8 @@ import { Stack } from 'expo-router'
 import { Provider as PaperProvider, MD3DarkTheme } from 'react-native-paper'
 import { RagChatProvider } from '../src/context/RagChatContext'
 import { VariablesProvider } from '@/src/context/VariablesContext'
+import { useEffect } from 'react'
+import { Linking, Alert } from 'react-native'
 
 const darkTheme = {
   ...MD3DarkTheme,
@@ -21,6 +23,24 @@ const darkTheme = {
 }
 
 const RootLayout = () => {
+
+  useEffect(() => {
+    // 👂 Listen for deep-link redirects (e.g. marxrag://cancel or marxrag://success)
+    const sub = Linking.addEventListener('url', event => {
+      const url = event.url
+
+      // check if it contains “cancel” or “success”
+      if (url.includes('cancel')) {
+        Alert.alert('Payment canceled', 'Your payment was canceled.')
+      } else if (url.includes('success')) {
+        Alert.alert('Success', 'Thank you for your donation!')
+      }
+    })
+
+    return () => sub.remove()
+  }, [])
+
+  
   return (
     <VariablesProvider>
       {/* UI theme wrapper */}

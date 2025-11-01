@@ -1,17 +1,18 @@
+// backend\src\stripe\stripe.controller.ts
 import type { Request, Response } from 'express'
 import * as stripeService from './stripe.service'
-// import * as transactionDAO from '../daos/transaction.dao'
-// import * as participantDAO from '../daos/participant.dao'
 
 // -----------------------------
 // 1️⃣ Create Checkout Session
 // -----------------------------
 const createCheckoutSession = async (req: Request, res: Response): Promise<void> => {
   const price_id = req.params.price_id
-
+  const platform = (req.query.platform as 'web' | 'native') || 'web'
+  console.log('🪵 createCheckoutSession called:', { price_id, platform })
+  
   try {
     // added participantInfo to catch participant url params
-    const session = await stripeService.createCheckoutSession(price_id)
+    const session = await stripeService.createCheckoutSession(price_id, platform)
     res.json(session)
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)

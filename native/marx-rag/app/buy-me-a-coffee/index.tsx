@@ -4,6 +4,7 @@ import { View, Image } from 'react-native'
 import { Text, Button, Card } from 'react-native-paper'
 import * as Linking from 'expo-linking'
 import axios from 'axios'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useVariables } from '../../src/context/VariablesContext'
 
 // const PUBLIC_STRIPE_KEY = process.env.EXPO_PUBLIC_STRIPE_KEY
@@ -16,7 +17,7 @@ export default function BuyMeACoffee() {
   const handleCheckout = async () => {
     try {
       setLoading(true)
-      const { data } = await axios.post(`${backendUrl}/api/stripe/checkout/${PRICE_ID_2E}`)
+      const { data } = await axios.post(`${backendUrl}/api/stripe/checkout/${PRICE_ID_2E}?platform=native`)
       if (data.url) {
         await Linking.openURL(data.url) // opens device browser to Stripe Checkout
       } else {
@@ -30,76 +31,79 @@ export default function BuyMeACoffee() {
   }
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: '#121212',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-      }}
-    >
-      <Text
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#121212' }}>
+      <View
         style={{
-          color: '#ffcc00',
-          fontSize: 24,
-          fontWeight: '600',
-          marginBottom: 20,
-        }}
-      >
-        ☕ Support this project
-      </Text>
-
-      <Card
-        style={{
-          backgroundColor: '#1a1a1a',
-          borderColor: '#555',
-          borderWidth: 1,
-          borderRadius: 12,
-          width: '90%',
+          flex: 1,
+          backgroundColor: '#121212',
           alignItems: 'center',
+          justifyContent: 'center',
           padding: 16,
         }}
       >
-        <Image
-          source={require('../../assets/three_coins.png')}
-          style={{
-            width: 200,
-            height: 120,
-            resizeMode: 'contain',
-            marginBottom: 16,
-          }}
-        />
         <Text
           style={{
-            color: '#fff',
-            fontSize: 18,
-            marginBottom: 8,
+            color: '#ffcc00',
+            fontSize: 24,
+            fontWeight: '600',
+            marginBottom: 20,
           }}
         >
-          Donate 2 €
-        </Text>
-        <Text
-          style={{
-            color: '#ccc',
-            fontSize: 14,
-            marginBottom: 16,
-          }}
-        >
-          Wow, you’re a hero! 💪
+          ☕ Support this project
         </Text>
 
-        <Button
-          mode="contained"
-          buttonColor="#ffcc00"
-          textColor="#000"
-          onPress={handleCheckout}
-          loading={loading}
-          style={{ borderRadius: 8, paddingHorizontal: 24 }}
+        <Card
+          style={{
+            backgroundColor: '#1a1a1a',
+            borderColor: '#555',
+            borderWidth: 1,
+            borderRadius: 12,
+            width: '90%',
+            alignItems: 'center',
+            padding: 16,
+          }}
         >
-          Donate 2 €
-        </Button>
-      </Card>
-    </View>
+          <Image
+            source={require('../../assets/three_coins.png')}
+            style={{
+              width: 200,
+              height: 120,
+              resizeMode: 'contain',
+              marginBottom: 16,
+            }}
+          />
+          <Text
+            style={{
+              color: '#fff',
+              fontSize: 18,
+              marginBottom: 8,
+            }}
+          >
+            Donate 2 €
+          </Text>
+          <Text
+            style={{
+              color: '#ccc',
+              fontSize: 14,
+              marginBottom: 16,
+            }}
+          >
+            Wow, you’re a hero! 💪
+          </Text>
+
+          <Button
+            mode="contained"
+            buttonColor="#ffcc00"
+            textColor="#000"
+            onPress={handleCheckout}
+            loading={loading}
+            style={{ borderRadius: 8, paddingHorizontal: 24 }}
+          >
+            Donate 2 €
+          </Button>
+        </Card>
+      </View>
+    </SafeAreaView>
+
   )
 }

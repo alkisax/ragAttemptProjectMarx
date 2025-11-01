@@ -4,6 +4,7 @@
   Δεν έχει αλλάξει απο web
 */
 
+import 'react-native-get-random-values'
 import axios from 'axios'
 import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'

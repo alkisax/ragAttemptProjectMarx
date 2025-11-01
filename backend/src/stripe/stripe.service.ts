@@ -16,16 +16,28 @@ const QUANTITY = 1
 // 1️⃣ Create Checkout Session
 // -----------------------------
 export const createCheckoutSession = async (
-  priceId: string
+  priceId: string,
+  platform: 'web' | 'native' = 'web'
 ): Promise<{ id: string; url: string | null }> => {
   if (!process.env.STRIPE_SECRET_KEY) {
     throw new Error('Missing STRIPE_SECRET_KEY in environment')
   }
 
-  // const BACKEND_URL = process.env.YOUR_DOMAIN || 'http://localhost:3001'
   const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+  const FRONTEND_PATH = process.env.FRONTEND_PATH || '/capital'
 
-  console.log('💳 Creating checkout session')
+   // 🧠 Default URLs (for web)
+  let success_url = `${FRONTEND_URL}${FRONTEND_PATH}/success?success=true&session_id={CHECKOUT_SESSION_ID}`
+  let cancel_url = `${FRONTEND_URL}${FRONTEND_PATH}?canceled=true`
+
+  // 📱 Override for native app
+  if (platform === 'native') {
+    const APP_SCHEME = process.env.APP_SCHEME || 'marxrag'
+    success_url = `${APP_SCHEME}://success?session_id={CHECKOUT_SESSION_ID}`
+    cancel_url = `${APP_SCHEME}://cancel`
+  }
+
+  console.log('💳 Creating checkout session', { platform, success_url, cancel_url })
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
@@ -36,8 +48,8 @@ export const createCheckoutSession = async (
       },
     ],
     mode: 'payment',
-    success_url: `${FRONTEND_URL}/success?success=true&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${FRONTEND_URL}/cancel?canceled=true`,
+    success_url,
+    cancel_url,
   })
 
   return { id: session.id, url: session.url }
